@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zhu">
+
+
+
+    <meta name="description" content="这是一个个人博客">
+
+
+
+<title>搞懂vuex——这一篇就够了 | zcblog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const currentTheme = window.localStorage && window.localStorage.getItem('theme') || '';
+            const isDark = currentTheme === 'dark';
+            const pagebody = document.getElementsByTagName('body')[0]
+            if (isDark) {
+                pagebody.classList.add('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Dark"
+            } else {
+                pagebody.classList.remove('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Light"
+            }
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Zhu&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Zhu&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">搞懂vuex——这一篇就够了</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zhu</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">August 17, 2022&nbsp;&nbsp;13:00:19</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/vue/">vue</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h3 id="vuex概述"><a href="#vuex概述" class="headerlink" title="vuex概述"></a>vuex概述</h3><p><strong>组件之间数据共享的方式有：</strong></p>
+<ul>
+<li><p>父组件向子组件共享数据： <code>v-bind</code> 属性绑定</p>
+</li>
+<li><p>子组件向父组件共享数据：<code> v-on</code> 事件绑定 子组件绑定一个事件来发送数据 <code>this.$emit(eventName,data)</code></p>
+</li>
+<li><p>兄弟组件之间共享数据： <code>EventBus</code>，一个组件发送数据，另一个组件接收数据，需要用到一个公共的Vue实例：<code>bus.$on(eventName,function(e)&#123;...&#125;)</code></p>
+</li>
+</ul>
+<p><strong>如果需要大范围，频繁地进行数据共享，那么就需要vuex。</strong></p>
+<h4 id="vuex是什么"><a href="#vuex是什么" class="headerlink" title="vuex是什么"></a>vuex是什么</h4><p>vuex是实现组件全局状态（数据）管理的一种机制，可以方便的实现组件之间数据的共享。</p>
+<p><strong>使用vuex有什么好处？</strong></p>
+<ul>
+<li>能够在vuex中集中管理共享的数据，易于开发和后期维护。</li>
+<li>能够高效地实现组件之间的数据共享，提高开发效率。</li>
+<li>存储在vuex中的数据都是<strong>响应式</strong>的，能够实时保持数据与页面的同步。</li>
+</ul>
+<p><strong>什么样的数据适合存储到vuex中</strong></p>
+<p>组件之间共享的数据，才有必要存储到vuex中，对于组件中的私有数据，依旧存储在组件自身的data中即可。</p>
+<h4 id="vuex的state节点"><a href="#vuex的state节点" class="headerlink" title="vuex的state节点"></a>vuex的state节点</h4><p>① 安装</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install vuex --save</span><br></pre></td></tr></table></figure>
+
+<p>② 导入vuex包</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">Vuex</span> <span class="keyword">from</span> <span class="string">&#x27;vuex&#x27;</span></span><br><span class="line"><span class="title class_">Vue</span>.<span class="title function_">use</span>(<span class="title class_">Vuex</span>)</span><br></pre></td></tr></table></figure>
+
+<p>③ 创建store对象</p>
+<p>一般在store/index.js文件中</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> store = <span class="keyword">new</span> <span class="title class_">Vuex</span>.<span class="title class_">Store</span>(&#123;</span><br><span class="line">    <span class="comment">// state中存放的就是全局共享的数据</span></span><br><span class="line">    <span class="attr">state</span>:&#123; <span class="attr">count</span>: <span class="number">0</span>&#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>④ 将store对象挂在到vue实例中</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="title class_">Vue</span>(&#123;</span><br><span class="line">    <span class="attr">el</span>: <span class="string">&#x27;#app&#x27;</span>,</span><br><span class="line">    <span class="attr">render</span>: <span class="function"><span class="params">h</span>=&gt;</span><span class="title function_">h</span>(app),</span><br><span class="line">    router,</span><br><span class="line">    store</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>访问store中数据的两种方式：</p>
+<ul>
+<li><p>方式一：直接使用 <code>this.$store.state.count</code></p>
+</li>
+<li><p>方式二：使用<code>mapState</code>函数将state映射为vue实例中的一个计算属性</p>
+</li>
+</ul>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1.从vuex中按需导入mapState函数</span></span><br><span class="line"><span class="keyword">import</span> &#123; mapState &#125; <span class="keyword">from</span> <span class="string">&#x27;vuex&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 2.将当前组件需要的全局数据，映射为当前组件的computed计算属性</span></span><br><span class="line"><span class="attr">coumputed</span>: &#123;</span><br><span class="line">    ...<span class="title function_">mapState</span>([<span class="string">&#x27;count&#x27;</span>])</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>...</code>是展开运算符，这里的意思是将<code>mapState</code>函数返回的对象展开。此时当前Vue实例拥有了一个数据为<code>count</code>，可以直接通过<code>this.count</code>进行调用，但是不能修改。</p>
+</blockquote>
+<p>如果我们将<code>mapState([&#39;count&#39;])</code>打印，发现是一个对象，其中有一个属性为<code>count</code></p>
+<h4 id="vuex的mutations节点"><a href="#vuex的mutations节点" class="headerlink" title="vuex的mutations节点"></a>vuex的mutations节点</h4><p>只能通过<code>mutation</code>来修改<code>store</code>中的数据。这种方式虽然繁琐一些，但是可以集中监控所有数据的变化。</p>
+<blockquote>
+<p>尽管也可以通过<code>this.$store.state.count++</code>的方式来修改数据，但是强烈不建议这么做。</p>
+</blockquote>
+<p>在<code>mutations</code>节点中定义方法：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> store = newe <span class="title class_">Vuex</span>.<span class="title class_">Store</span>(&#123;</span><br><span class="line">    <span class="attr">state</span>: &#123;</span><br><span class="line">        <span class="attr">count</span>: <span class="number">0</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">mutations</span>: &#123;</span><br><span class="line">        <span class="title function_">add</span>(<span class="params">state</span>) &#123;</span><br><span class="line">            state.<span class="property">count</span>++</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>触发<code>mutation</code>，需要调用<code>commit</code>函数</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">methods</span>: &#123;</span><br><span class="line">    <span class="title function_">handle</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">$store</span>.<span class="title function_">commit</span>(<span class="string">&#x27;add&#x27;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果需要传参</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> store = newe <span class="title class_">Vuex</span>.<span class="title class_">Store</span>(&#123;</span><br><span class="line">    <span class="attr">state</span>: &#123;</span><br><span class="line">        <span class="attr">count</span>: <span class="number">0</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">mutations</span>: &#123;</span><br><span class="line">        <span class="comment">// 第一个参数永远是state，即当前store中的state对象</span></span><br><span class="line">        <span class="title function_">add</span>(<span class="params">state</span>) &#123;</span><br><span class="line">            state.<span class="property">count</span> += <span class="number">1</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="title function_">addN</span>(<span class="params">state, step</span>) &#123;</span><br><span class="line">            state.<span class="property">count</span> += step</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br><span class="line"><span class="attr">methods</span>: &#123;</span><br><span class="line">    <span class="title function_">handle</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">$store</span>.<span class="title function_">commit</span>(<span class="string">&#x27;addN&#x27;</span>,<span class="number">3</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>实际上 <code>this.$store.commit(&#39;add&#39;)</code>，谁调用<code>add</code>方法，谁就把他的<code>$state</code>传入。</p>
+</blockquote>
+<p>触发mutations的第二种方法：调用<code>mapMutations</code>函数将mutation映射为vue实例中的一个方法。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1.从vuex中按需导入mapMutations函数</span></span><br><span class="line"><span class="keyword">import</span> &#123;mapMutations&#125; <span class="keyword">from</span> <span class="string">&#x27;vuex&#x27;</span></span><br><span class="line"><span class="comment">// 2.通过刚才导入的mapMutations函数，将需要的mutations函数，映射为当前组件的methods方法</span></span><br><span class="line"><span class="attr">methods</span>: &#123;</span><br><span class="line">    ...<span class="title function_">mapMutations</span>([<span class="string">&#x27;add&#x27;</span>])</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>同<code>state</code>类似，<code>state</code>是通过<code>mapState</code>函数，<code>mutation</code>是通过<code>mapMutations</code>,前者展开为属性，定义在计算属性节点中。后者展开为方法，定义在<code>methods</code>节点中。</p>
+</blockquote>
+<h4 id="vuex的actions节点"><a href="#vuex的actions节点" class="headerlink" title="vuex的actions节点"></a>vuex的actions节点</h4><p><strong>Action用于处理异步任务。</strong></p>
+<p>如果通过异步操作变更数据，必须通过Action，而不能使用Mutation，但是在Action中还是要通过触发Mutation的方式简介变更数据。</p>
+<p>以下写法是不正确的❌</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">mutations</span>: &#123;</span><br><span class="line">    <span class="title function_">add</span>(<span class="params">state</span>) &#123;</span><br><span class="line">      <span class="built_in">setTimeout</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">        state.<span class="property">count</span>++</span><br><span class="line">      &#125;, <span class="number">1000</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>异步操作要定义到<code>actions</code>节点下，但是最终还是会调用<code>mutations</code>中的方法。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">mutations</span>: &#123;</span><br><span class="line">  <span class="title function_">add</span>(<span class="params">state</span>) &#123;</span><br><span class="line">    state.<span class="property">count</span> += <span class="number">1</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;,</span><br><span class="line"><span class="attr">actions</span>: &#123;</span><br><span class="line">  <span class="comment">// 第一个传入的参数永远是context即当前store实例对象，因此拥有commit方法</span></span><br><span class="line">  <span class="title function_">addAsync</span>(<span class="params">context</span>) &#123;</span><br><span class="line">    <span class="built_in">setTimeout</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">      context.<span class="title function_">commit</span>(<span class="string">&#x27;add&#x27;</span>)</span><br><span class="line">    &#125;, <span class="number">1000</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>调用方法一：<code>this.$store.dispatch(&#39;addAsync&#39;)</code></p>
+<p>调用方法二：使用<code>mapActions</code>函数将action映射为vue实例的一个方法</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; mapActions &#125; <span class="keyword">from</span> <span class="string">&#x27;vuex&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">methods</span>: &#123;</span><br><span class="line">    ...<span class="title function_">mapActions</span>([<span class="string">&#x27;addAsync&#x27;</span>])</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 然后就可以直接在组件中进行调用了</span></span><br><span class="line"><span class="variable language_">this</span>.<span class="title function_">addAsync</span>()</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="vuex的getters节点"><a href="#vuex的getters节点" class="headerlink" title="vuex的getters节点"></a>vuex的getters节点</h4><p>getter不会修改state中的数据，只起到包装数据的作用，相当于vue中的计算属性</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">state</span>: &#123;</span><br><span class="line">    <span class="attr">count</span>: <span class="number">0</span></span><br><span class="line">&#125;,</span><br><span class="line"><span class="attr">getters</span>: &#123;</span><br><span class="line">    <span class="title function_">showNum</span>(<span class="params">state</span>)&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;当前的值为【&#x27;</span>+ state.<span class="property">count</span> + <span class="string">&#x27;】&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>访问方式一：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">this.$store.getter.showNum</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：这里不是执行函数<code>this.$store.getter.showNum()</code>，而是将其作为一个属性来使用。同vue中的计算属性一样，定义为函数，使用时为属性，不加括号。</p>
+</blockquote>
+<p>访问方式二：调用<code>mapGetters</code>方法将getter映射为vue实例中的一个计算属性</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123;mapGetters&#125; <span class="keyword">from</span> <span class="string">&#x27;vuex&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">computed</span>: &#123;</span><br><span class="line">    ...<span class="title function_">mapGetters</span>([<span class="string">&#x27;showNum&#x27;</span>])</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：这里展开时候是计算属性，而不是一个方法。</p>
+</blockquote>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ul>
+<li>数据/状态是定义在<code>state</code>节点中的</li>
+<li><code>mutations</code>节点中的函数用来对<code>state</code>节点中的数据进行操作</li>
+<li><code>actions</code>节点中的函数专门是进行异步操作的，最终操作数据还是调用<code>mutations</code>中的函数</li>
+<li><code>getters</code>是用来包装数据的，相当于<code>python</code>对象内置的<code>__str__</code>函数</li>
+</ul>
+<p>访问的方法：</p>
+<ul>
+<li><code>state</code>节点中的数据<code>this.$store.state.count</code>或者通过<code>...mapState([&#39;count&#39;])</code></li>
+<li><code>mutations</code>节点中的方法<code>this.$store.commit(&#39;add&#39;)</code>或者通过<code>...mapMutations([&#39;add&#39;])</code></li>
+<li><code>actions</code>节点中的方法<code>this.$store.dispatch(&#39;addAsync&#39;)</code>或者通过<code>...mapActions([&#39;addAsync&#39;])</code></li>
+<li><code>getters</code>节点中的方法（实际上是当成属性用）<code>this.$store.getter.showNum</code>或者通过<code>...mapGetters([&#39;showNum&#39;])</code>然后<code>this.showNum</code></li>
+</ul>
+<blockquote>
+<p>如果状态量较为多，使用map来将其映射为组件中的属性、方法或者计算属性使用比较方便。如果状态数量较少，那么直接通过<code>this.$store</code>来调用较为方便，但是任何时候都不能直接通过<code>this.$store</code>来修改数据。</p>
+</blockquote>
+<h3 id="基于vuex的案例"><a href="#基于vuex的案例" class="headerlink" title="基于vuex的案例"></a>基于vuex的案例</h3><p>参考视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1h7411N7bg?spm_id_from=333.337.search-card.all.click&vd_source=35fa3e44b90546361b663bf61eec4116">哔哩哔哩-vuex从入门到实战-黑马程序员</a></p>
+<h4 id="案例预览"><a href="#案例预览" class="headerlink" title="案例预览"></a>案例预览</h4><p>案例源码所在位置： <code>D:\AllProjects\vueProjects\vuex-demo</code></p>
+<p><img src="/2022/08/17/06.vuex/image-20220805112108514.png" alt="image-20220805112108514"></p>
+<h4 id="案例需求"><a href="#案例需求" class="headerlink" title="案例需求"></a>案例需求</h4><p>一个todo-list，需要实现的功能有：</p>
+<ul>
+<li>添加事务</li>
+<li>删除一条事务</li>
+<li>删除已完成的事务</li>
+<li>根据“全部”、“未完成”、“已完成” 显示不同的数据</li>
+<li>显示剩余未完成数量</li>
+<li>复选框能够选中并发生变化</li>
+</ul>
+<h4 id="关键点"><a href="#关键点" class="headerlink" title="关键点"></a>关键点</h4><h5 id="定义状态-数据："><a href="#定义状态-数据：" class="headerlink" title="定义状态/数据："></a><strong>定义状态/数据：</strong></h5><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">state</span>: &#123;</span><br><span class="line">  <span class="comment">// 所有任务列表</span></span><br><span class="line">  <span class="attr">list</span>: [],</span><br><span class="line">  <span class="comment">// 文本框的内容</span></span><br><span class="line">  <span class="attr">inputValue</span>: <span class="string">&#x27;&#x27;</span>,</span><br><span class="line">  <span class="comment">// 下一个ID</span></span><br><span class="line">  <span class="attr">nextId</span>: <span class="number">5</span>,</span><br><span class="line">  <span class="comment">// 按钮的类型： all 表示全部  done表示已完成  todo表示未完成</span></span><br><span class="line">  <span class="attr">viewKey</span>: <span class="string">&#x27;all&#x27;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="初始化请求数据"><a href="#初始化请求数据" class="headerlink" title="初始化请求数据"></a><strong>初始化请求数据</strong></h5><p>初始化请求所有数据定义在actions节点中，因为是异步请求动作。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">actions</span>: &#123;</span><br><span class="line">  <span class="comment">// 请求数据，异步动作，放到actions中</span></span><br><span class="line">  <span class="title function_">getList</span>(<span class="params">context</span>) &#123;</span><br><span class="line">    axios.<span class="title function_">get</span>(<span class="string">&#x27;/data.json&#x27;</span>).<span class="title function_">then</span>(<span class="function">(<span class="params">&#123; data &#125;</span>) =&gt;</span> &#123;</span><br><span class="line">      context.<span class="title function_">commit</span>(<span class="string">&#x27;initList&#x27;</span>, data)</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<p>实际上还是调用了mutations节点中的initList方法: 该方法为list赋初值。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">mutations</span>: &#123;</span><br><span class="line">  <span class="title function_">initList</span>(<span class="params">state, val</span>) &#123;</span><br><span class="line">    state.<span class="property">list</span> = val</span><br><span class="line">  &#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而在vue视图中，在created中调用触发action：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">created() &#123;</span><br><span class="line">   // 触发请求数据的action</span><br><span class="line">   this.$store.dispatch(&#x27;getList&#x27;)</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="监听输入框状态"><a href="#监听输入框状态" class="headerlink" title="监听输入框状态"></a><strong>监听输入框状态</strong></h5><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a-input</span></span></span><br><span class="line"><span class="tag">  <span class="attr">placeholder</span>=<span class="string">&quot;请输入任务&quot;</span></span></span><br><span class="line"><span class="tag">  <span class="attr">class</span>=<span class="string">&quot;my_ipt&quot;</span></span></span><br><span class="line"><span class="tag">  <span class="attr">:value</span>=<span class="string">&quot;inputValue&quot;</span></span></span><br><span class="line"><span class="tag">  @<span class="attr">change</span>=<span class="string">&quot;handleInputChange&quot;</span></span></span><br><span class="line"><span class="tag">/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">a-button</span> <span class="attr">type</span>=<span class="string">&quot;primary&quot;</span> @<span class="attr">click</span>=<span class="string">&quot;addItem&quot;</span>&gt;</span>添加事项<span class="tag">&lt;/<span class="name">a-button</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>输入框的value是动态绑定的，和store中的inputValue一致，而如果需要这么使用，就需要将inputValue进行映射</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...<span class="title function_">mapState</span>([<span class="string">&#x27;inputValue&#x27;</span>])</span><br></pre></td></tr></table></figure>
+
+<p>监听到输入框内容发生变化，将最新内容赋值给inputValue</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">handleInputChange</span>(<span class="params">e</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">$store</span>.<span class="title function_">commit</span>(<span class="string">&#x27;setInputValue&#x27;</span>, e.<span class="property">target</span>.<span class="property">value</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">setInputValue</span>(<span class="params">state, val</span>) &#123;</span><br><span class="line">  state.<span class="property">inputValue</span> = val</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="监听复选框状态"><a href="#监听复选框状态" class="headerlink" title="监听复选框状态"></a><strong>监听复选框状态</strong></h5><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a-checkbox</span></span></span><br><span class="line"><span class="tag">  <span class="attr">:checked</span>=<span class="string">&quot;item.done&quot;</span></span></span><br><span class="line"><span class="tag">  @<span class="attr">change</span>=<span class="string">&quot;cbStatusChanged($event, item.id)&quot;</span></span></span><br><span class="line"><span class="tag">  &gt;</span>&#123;&#123; item.info &#125;&#125;</span><br><span class="line"><span class="tag">&lt;/<span class="name">a-checkbox</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>同理复选框的checked值也要动态绑定，且需要监听其选中状态的变化</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">cbStatusChanged</span>(<span class="params">e, id</span>) &#123;</span><br><span class="line">     <span class="comment">// 通过e.target.checked可以接收到最新的选中状态</span></span><br><span class="line">     <span class="keyword">const</span> param = &#123;</span><br><span class="line">       <span class="attr">val</span>: e.<span class="property">target</span>.<span class="property">checked</span>,</span><br><span class="line">       <span class="attr">id</span>: id</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="variable language_">this</span>.<span class="property">$store</span>.<span class="title function_">commit</span>(<span class="string">&#x27;changeStatusById&#x27;</span>, param)</span><br><span class="line">   &#125;,</span><br></pre></td></tr></table></figure>
+
+<p>需要传入$event对象，才能获取到最新的选中状态，true为选中，false为未选中。然后触发changeStatusById进行修改：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">changeStatusById</span>(<span class="params">state, param</span>) &#123;</span><br><span class="line">  <span class="comment">// done: param.val id: param.id</span></span><br><span class="line">  <span class="keyword">const</span> i = state.<span class="property">list</span>.<span class="title function_">findIndex</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">id</span> === param.<span class="property">id</span>)</span><br><span class="line">  state.<span class="property">list</span>[i].<span class="property">done</span> = param.<span class="property">val</span></span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<p>因为只能穿一个参数，因此要封装成对象。</p>
+<h5 id="删除一条记录"><a href="#删除一条记录" class="headerlink" title="删除一条记录"></a><strong>删除一条记录</strong></h5><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;a slot=<span class="string">&quot;actions&quot;</span> @click=<span class="string">&quot;removeById(item.id)&quot;</span>&gt;删除&lt;/a&gt;</span><br><span class="line"><span class="comment">// methods节点中</span></span><br><span class="line"><span class="title function_">removeById</span>(<span class="params">id</span>) &#123;</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">$store</span>.<span class="title function_">commit</span>(<span class="string">&#x27;removeById&#x27;</span>, id)</span><br><span class="line">&#125;,</span><br><span class="line"></span><br><span class="line"><span class="comment">// store/index.js中</span></span><br><span class="line"><span class="title function_">removeById</span>(<span class="params">state, id</span>) &#123;</span><br><span class="line">  <span class="comment">// 删除对应的数据</span></span><br><span class="line">  <span class="keyword">const</span> i = state.<span class="property">list</span>.<span class="title function_">findIndex</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">id</span> === id)</span><br><span class="line">  <span class="keyword">if</span> (i !== -<span class="number">1</span>) &#123;</span><br><span class="line">    state.<span class="property">list</span>.<span class="title function_">splice</span>(i, <span class="number">1</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<h5 id="删除所有已经完成的记录"><a href="#删除所有已经完成的记录" class="headerlink" title="删除所有已经完成的记录"></a><strong>删除所有已经完成的记录</strong></h5><p>同上。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">cleanDone</span>(<span class="params"></span>) &#123;</span><br><span class="line">	<span class="variable language_">this</span>.<span class="property">$store</span>.<span class="title function_">commit</span>(<span class="string">&#x27;cleanDone&#x27;</span>)</span><br><span class="line">&#125;,</span><br><span class="line">        </span><br><span class="line"><span class="title function_">cleanDone</span>(<span class="params">state</span>) &#123;</span><br><span class="line">	<span class="comment">// 清除所有done为true的数据</span></span><br><span class="line">	state.<span class="property">list</span> = state.<span class="property">list</span>.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> !item.<span class="property">done</span>)</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<h5 id="根据不同视图显示不同的数据-难点"><a href="#根据不同视图显示不同的数据-难点" class="headerlink" title="根据不同视图显示不同的数据(难点)"></a><strong>根据不同视图显示不同的数据</strong>(难点)</h5><p>这里需要一个ViewKey来记录用户选择的是什么</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a-button-group</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">a-button</span></span></span><br><span class="line"><span class="tag">    <span class="attr">:type</span>=<span class="string">&quot;viewKey === &#x27;all&#x27; ? &#x27;primary&#x27; : &#x27;default&#x27;&quot;</span></span></span><br><span class="line"><span class="tag">    @<span class="attr">click</span>=<span class="string">&quot;changeList(&#x27;all&#x27;)&quot;</span></span></span><br><span class="line"><span class="tag">    &gt;</span>全部&lt;/a-button</span><br><span class="line">  &gt;</span><br><span class="line">  <span class="tag">&lt;<span class="name">a-button</span></span></span><br><span class="line"><span class="tag">    <span class="attr">:type</span>=<span class="string">&quot;viewKey === &#x27;notDone&#x27; ? &#x27;primary&#x27; : &#x27;default&#x27;&quot;</span></span></span><br><span class="line"><span class="tag">    @<span class="attr">click</span>=<span class="string">&quot;changeList(&#x27;notDone&#x27;)&quot;</span></span></span><br><span class="line"><span class="tag">    &gt;</span>未完成&lt;/a-button</span><br><span class="line">  &gt;</span><br><span class="line">  <span class="tag">&lt;<span class="name">a-button</span></span></span><br><span class="line"><span class="tag">    <span class="attr">:type</span>=<span class="string">&quot;viewKey === &#x27;done&#x27; ? &#x27;primary&#x27; : &#x27;default&#x27;&quot;</span></span></span><br><span class="line"><span class="tag">    @<span class="attr">click</span>=<span class="string">&quot;changeList(&#x27;done&#x27;)&quot;</span></span></span><br><span class="line"><span class="tag">    &gt;</span>已完成&lt;/a-button</span><br><span class="line">  &gt;</span><br><span class="line"><span class="tag">&lt;/<span class="name">a-button-group</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>viewKey要想直接使用，也得先映射： </p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...<span class="title function_">mapState</span>([<span class="string">&#x27;inputValue&#x27;</span>, <span class="string">&#x27;viewKey&#x27;</span>])</span><br></pre></td></tr></table></figure>
+
+<p>用户点击某个按钮后，触发changeList</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">changeList</span>(<span class="params">key</span>) &#123;</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">$store</span>.<span class="title function_">commit</span>(<span class="string">&#x27;changeViewKey&#x27;</span>, key)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>提交changeViewKey,将用户的更改同步到ViewKey</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">changeViewKey</span>(<span class="params">state, key</span>) &#123;</span><br><span class="line">  <span class="comment">// 改变ViewKey的值：all done notDone</span></span><br><span class="line">  state.<span class="property">viewKey</span> = key</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而button的type是动态绑定的：选中的为primary,否则为default</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:type=<span class="string">&quot;viewKey === &#x27;notDone&#x27; ? &#x27;primary&#x27; : &#x27;default&#x27;&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>至于数据：使用的是Getters,相当于计算属性,未完成数量也是getter,在getters节点下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">notDoneCount</span>(<span class="params">state</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> state.<span class="property">list</span>.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> !item.<span class="property">done</span>).<span class="property">length</span></span><br><span class="line">&#125;,</span><br><span class="line"><span class="title function_">getListByKey</span>(<span class="params">state</span>) &#123;</span><br><span class="line">      <span class="comment">// 根据类型返回数据</span></span><br><span class="line">      <span class="keyword">if</span> (state.<span class="property">viewKey</span> === <span class="string">&#x27;all&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> state.<span class="property">list</span></span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (state.<span class="property">viewKey</span> === <span class="string">&#x27;done&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> state.<span class="property">list</span>.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> item.<span class="property">done</span>)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (state.<span class="property">viewKey</span> === <span class="string">&#x27;notDone&#x27;</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> state.<span class="property">list</span>.<span class="title function_">filter</span>(<span class="function">(<span class="params">item</span>) =&gt;</span> !item.<span class="property">done</span>)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 返回默认选项</span></span><br><span class="line">      <span class="keyword">return</span> state.<span class="property">list</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后在computed节点下需要映射为计算属性：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...<span class="title function_">mapGetters</span>([<span class="string">&#x27;notDoneCount&#x27;</span>, <span class="string">&#x27;getListByKey&#x27;</span>])</span><br></pre></td></tr></table></figure>
+
+<p>最后在视图上可以直接使用</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a-list</span> <span class="attr">bordered</span> <span class="attr">:dataSource</span>=<span class="string">&quot;getListByKey&quot;</span> <span class="attr">class</span>=<span class="string">&quot;dt_list&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">span</span>&gt;</span>&#123;&#123; notDoneCount &#125;&#125;条剩余<span class="tag">&lt;/<span class="name">span</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zhu</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/06.vuex/">https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/06.vuex/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>LIGHT</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/vue/"># vue</a>
+                    
+                        <a href="/tags/vuex/"># vuex</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2022/08/17/05.axios%E5%92%8C%E6%9C%80%E7%BB%88%E6%A1%88%E4%BE%8B/">在vue中使用axios</a>
+            
+            
+            <a class="next" rel="next" href="/2022/08/17/04.%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6%E3%80%81%E6%8F%92%E6%A7%BD%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E4%BB%A4%E5%92%8C%E8%B7%AF%E7%94%B1/">vue动态组件、插槽、自定义指令和路由</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zhu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>

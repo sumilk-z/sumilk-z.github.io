@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zhu">
+
+
+
+    <meta name="description" content="这是一个个人博客">
+
+
+
+<title>vue动态组件、插槽、自定义指令和路由 | zcblog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const currentTheme = window.localStorage && window.localStorage.getItem('theme') || '';
+            const isDark = currentTheme === 'dark';
+            const pagebody = document.getElementsByTagName('body')[0]
+            if (isDark) {
+                pagebody.classList.add('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Dark"
+            } else {
+                pagebody.classList.remove('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Light"
+            }
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Zhu&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Zhu&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">vue动态组件、插槽、自定义指令和路由</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zhu</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">August 17, 2022&nbsp;&nbsp;12:59:19</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/vue/">vue</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h3 id="动态组件"><a href="#动态组件" class="headerlink" title="动态组件"></a>动态组件</h3><p>动态组件是指动态切换vue组件的显示和隐藏。</p>
+<p>vue提供了一个内置的<code>&lt;component&gt;</code>组件，专门用来实现动态组件的渲染。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">data()&#123;</span><br><span class="line">//1.当前要渲染的组件名称</span><br><span class="line">	return &#123;</span><br><span class="line">		comName:&#x27;Left&#x27;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">//2.通过is属性，动态指定要渲染的组件</span><br><span class="line">&lt;component :is=&quot;comName&quot;&gt;&lt;/component&gt;</span><br><span class="line"></span><br><span class="line">//3.点击按钮，动态切换组件的名称</span><br><span class="line">&lt;button @click=&quot;comName = &#x27;Left&#x27;&quot;&gt;</span><br><span class="line">    展示Left组件</span><br><span class="line">&lt;/button&gt;</span><br><span class="line">&lt;button @click=&quot;comName = &#x27;Right&#x27;&quot;&gt;</span><br><span class="line">    展示Right组件</span><br><span class="line">&lt;/button&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>通过按钮点击切换组件的显示类似路由的效果。</p>
+</blockquote>
+<p>默认情况下，切换动态组件时无法保持组件的状态，可以使用<code>&lt;keep-alive&gt;</code>组件保持动态组件的状态。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;keep-alive&gt;</span><br><span class="line">	&lt;component :is=&quot;comName&quot;&gt;&lt;/component&gt;</span><br><span class="line">&lt;/keep-alive&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>通过chrome的vue调试工具可以看到，显示Right组件的时候，Left组件并不是被销毁了，而是<code>inactive</code>状态</p>
+</blockquote>
+<p>当组件被缓存时，会自动触发组件的<code>deactivated</code>生命周期函数；</p>
+<p>当组件被激活时，会自动触发组件的<code>activate</code>生命周期函数。</p>
+<p><strong><code>keep-alive</code>的<code>include</code>属性和<code>exclude</code>属性</strong></p>
+<ul>
+<li><code>include</code>属性用来指定：只有名称匹配的组件会被缓存</li>
+<li><code>exclude</code>属性用来指定：名称匹配的组件不会被缓存</li>
+<li>二者不能同时使用</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;keep-alive include=&quot;Left,Right&quot;&gt;</span><br><span class="line">    &lt;component :is=&quot;comName&quot;&gt;&lt;/component&gt;</span><br><span class="line">&lt;/keep-alive&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：这里的名称匹配的是组件的name属性，而不是导入的时候自定义的名字；即组件中<code>export default&#123; name:xxx&#125;</code>，否则<code>include、exclude</code>指令不生效。</p>
+</blockquote>
+<blockquote>
+<p>一般而言，组件中的name属性叫什么名字，导入的时候就叫什么名字是最好的。</p>
+</blockquote>
+<h3 id="插槽"><a href="#插槽" class="headerlink" title="插槽"></a>插槽</h3><p>插槽(slot)是vue为组件的封装者提供的能力，允许开发者在封装组件时，把不确定的、希望由用户指定的部分定义为插槽。</p>
+<blockquote>
+<p>相当于<code>&#123;&#123;&#125;&#125;</code>插槽表达式的扩展。 可以把插槽认为是组件封装期间为用户预留的内容的占位符。</p>
+</blockquote>
+<p>定义一个<code>comp</code>组件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">	&lt;slot&gt;&lt;/slot&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+<p>用户使用时：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;comp&gt;</span><br><span class="line">	&lt;p&gt;用户自定义的内容&lt;/p&gt;</span><br><span class="line">&lt;/comp&gt;</span><br></pre></td></tr></table></figure>
+
+<p>封装组件时，可以指定默认内容，如果用户没有使用插槽，则显示默认内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">	&lt;slot&gt;默认显示的内容&lt;/slot&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="具名插槽"><a href="#具名插槽" class="headerlink" title="具名插槽"></a><strong>具名插槽</strong></h4><p>如果有多个插槽，则需要为插槽指定name属性。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">	&lt;slot name=&quot;slot1&quot;&gt;&lt;/slot&gt;</span><br><span class="line">    &lt;slot name=&quot;slot2&quot;&gt;&lt;/slot&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：没有指定name属性的插槽，有一个隐含的名称叫做<code>default</code></p>
+</blockquote>
+<p><strong>为具名插槽提供内容</strong></p>
+<p>v-slot指令可以为具名插槽指定内容，可以简写为 <code>#</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;comp v-slot:slot1&gt;</span><br><span class="line">    &lt;p&gt;用户自定义的内容&lt;/p&gt;</span><br><span class="line">&lt;/comp&gt;</span><br><span class="line">&lt;comp #slot2&gt;</span><br><span class="line">    &lt;p&gt;用户自定义的内容&lt;/p&gt;</span><br><span class="line">&lt;/comp&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="作用域插槽"><a href="#作用域插槽" class="headerlink" title="作用域插槽"></a>作用域插槽</h4><p>可以为预留的<code>&lt;slot&gt;</code>插槽绑定props数据，这种带有props数据的插槽叫做作用域插槽。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;tbody&gt;</span><br><span class="line">	&lt;slot v-for=&quot;item in list&quot; :user=&quot;item&quot;&gt;&lt;/slot&gt;</span><br><span class="line">&lt;/tbody&gt;</span><br></pre></td></tr></table></figure>
+
+<p>使用的时候：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;comp&gt;</span><br><span class="line">	&lt;template v-slot:default=&quot;scope&quot;&gt;</span><br><span class="line">    	&lt;tr&gt;</span><br><span class="line">            &lt;td&gt;&#123;&#123;scope&#125;&#125;&lt;/td&gt;</span><br><span class="line">        &lt;/tr&gt;</span><br><span class="line">    &lt;/template&gt;</span><br><span class="line">&lt;/comp&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>scope是指定的接收参数的对象名称。</p>
+</blockquote>
+<p>也可以解构赋值简化操作：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;template #default=&quot;&#123;user&#125;&quot;&gt;</span><br><span class="line">	&lt;!--结构出scope中的user对象--&gt;</span><br><span class="line">&lt;/template&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>相当于组件提供了插槽和数据，具体该如何使用，是使用方的自由。</p>
+</blockquote>
+<h3 id="自定义指令"><a href="#自定义指令" class="headerlink" title="自定义指令"></a>自定义指令</h3><p>在每个vue组件中，可以在directives节点下声明私有自定义指令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">directives:&#123;</span><br><span class="line">	color:&#123;</span><br><span class="line">		//为绑定到的HTML元素设置红的的文字</span><br><span class="line">		bind(el)&#123;</span><br><span class="line">			el.style.color = &#x27;red&#x27;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用自定义指令的时候，需要加上v-前缀</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;h1 v-color&gt;</span><br><span class="line">    App 组件</span><br><span class="line">&lt;/h1&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>动态绑定指令参数</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">data()&#123;</span><br><span class="line">	return &#123;</span><br><span class="line">		color:&#x27;red&#x27;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&lt;h1 v-color=&quot;color&quot;&gt;</span><br><span class="line">    App 组件</span><br><span class="line">&lt;/h1&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>通过binding获取指令的参数值</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">directives:&#123;</span><br><span class="line">	color:&#123;</span><br><span class="line">		//为绑定到的HTML元素设置红的的文字</span><br><span class="line">		bind(el,binding)&#123;</span><br><span class="line">			//通过binding对象的.value属性，获取动态的参数值</span><br><span class="line">			el.style.color = binding.value</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>bind函数只调用一次：当指令第一次绑定到元素时调用。 当DOM更新时bind函数不会被触发，update函数会在每次DOM更新时被调用：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">directives:&#123;</span><br><span class="line">	color:&#123;</span><br><span class="line">		//为绑定到的HTML元素设置红的的文字</span><br><span class="line">		bind(el,binding)&#123;</span><br><span class="line">			//通过binding对象的.value属性，获取动态的参数值</span><br><span class="line">			el.style.color = binding.value</span><br><span class="line">		&#125;,</span><br><span class="line">		update(el,binding)&#123;</span><br><span class="line">			el.style.color = binding.value</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果bind和update函数中的逻辑完全相同，则可以二合一：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">directives:&#123;</span><br><span class="line">	color(el,binding)&#123;</span><br><span class="line">		el.style.color = binding.value</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>全局自定义指令</strong></p>
+<p>在main.js文件中定义：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Vue.directive(&#x27;color&#x27;,function(el,binding)&#123;</span><br><span class="line">	el.style.color = binding.value</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="路由"><a href="#路由" class="headerlink" title="路由"></a>路由</h3><p>路由就是对应关系，给一个地址，映射到一个组件。</p>
+<p>SAP应用只有唯一的一个HTML页面，所有组件的展示和切换都在唯一的页面内完成，不同组件之间的切换需要通过<strong>前端路由</strong>来实现。</p>
+<h4 id="前端路由的工作流程"><a href="#前端路由的工作流程" class="headerlink" title="前端路由的工作流程"></a>前端路由的工作流程</h4><p>① 用户点击了页面上的路由链接</p>
+<p>② 导致URL地址栏中的<strong>Hash值</strong>发生了变化</p>
+<p>③ 前端路由监听到了<strong>Hash地址</strong>的变化</p>
+<p>④ 前端路由把当前Hash地址对应的组件渲染到浏览器中</p>
+<blockquote>
+<p>这里所谓的Hash值，其实是程序员自定义的路由地址，例如 ‘/home’ ‘/about’ 等。</p>
+</blockquote>
+<h4 id="用动态组件实现简易的前端路由"><a href="#用动态组件实现简易的前端路由" class="headerlink" title="用动态组件实现简易的前端路由"></a>用动态组件实现简易的前端路由</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div class=&quot;container&quot;&gt;</span><br><span class="line">    &lt;component :is=&quot;compName&quot;&gt;&lt;/component&gt;</span><br><span class="line">    &lt;br/&gt;</span><br><span class="line">    &lt;a @click.prevent=&quot;compName=&#x27;Home&#x27;&quot; href=&quot;#/home&quot;&gt;home&lt;/a&gt;&amp;nbsp;</span><br><span class="line">    &lt;a @click.prevent=&quot;compName=&#x27;About&#x27;&quot; href=&quot;#/about&quot;&gt;about&lt;/a&gt;&amp;nbsp;</span><br><span class="line">    &lt;a @click.prevent=&quot;compName=&#x27;Setting&#x27;&quot; href=&quot;#/setting&quot;&gt;setting&lt;/a&gt;</span><br><span class="line">  &lt;/div&gt;</span><br><span class="line">&lt;/template&gt;</span><br><span class="line"></span><br><span class="line">&lt;script&gt;</span><br><span class="line">import Home from &#x27;./components/Home.vue&#x27;</span><br><span class="line">import About from &#x27;./components/About.vue&#x27;</span><br><span class="line">import Setting from &#x27;./components/Setting.vue&#x27;</span><br><span class="line">export default &#123;</span><br><span class="line">  name:&#x27;App&#x27;,</span><br><span class="line">  components:&#123;</span><br><span class="line">    Home,About,Setting</span><br><span class="line">  &#125;,</span><br><span class="line">  data()&#123;</span><br><span class="line">    return &#123;</span><br><span class="line">      compName:&#x27;Home&#x27;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">&lt;/script&gt;</span><br><span class="line"></span><br><span class="line">&lt;style&gt;</span><br><span class="line"></span><br><span class="line">&lt;/style&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这是一种方案，点击对应的链接能切换到不同的组件，但是因为<code>@click.prevent</code>,所以在URL地址栏地址不会有任何变化。</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">&lt;template&gt;</span><br><span class="line">  &lt;div class=&quot;container&quot;&gt;</span><br><span class="line">    &lt;component :is=&quot;compName&quot;&gt;&lt;/component&gt;</span><br><span class="line">    &lt;br/&gt;</span><br><span class="line">    &lt;a href=&quot;#/home&quot;&gt;home&lt;/a&gt;&amp;nbsp;</span><br><span class="line">    &lt;a href=&quot;#/about&quot;&gt;about&lt;/a&gt;&amp;nbsp;</span><br><span class="line">    &lt;a href=&quot;#/setting&quot;&gt;setting&lt;/a&gt;</span><br><span class="line">  &lt;/div&gt;</span><br><span class="line">&lt;/template&gt;</span><br><span class="line"></span><br><span class="line">&lt;script&gt;</span><br><span class="line">import Home from &#x27;./components/Home.vue&#x27;</span><br><span class="line">import About from &#x27;./components/About.vue&#x27;</span><br><span class="line">import Setting from &#x27;./components/Setting.vue&#x27;</span><br><span class="line">export default &#123;</span><br><span class="line">  name:&#x27;App&#x27;,</span><br><span class="line">  components:&#123;</span><br><span class="line">    Home,About,Setting</span><br><span class="line">  &#125;,</span><br><span class="line">  data()&#123;</span><br><span class="line">    return &#123;</span><br><span class="line">      compName:&#x27;Home&#x27;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  created()&#123;</span><br><span class="line">    window.onhashchange = ()=&gt;&#123;</span><br><span class="line">      switch(location.hash)&#123;</span><br><span class="line">        case &#x27;#/home&#x27;:</span><br><span class="line">          this.compName = &#x27;Home&#x27;</span><br><span class="line">          break</span><br><span class="line">        case &#x27;#/about&#x27;:</span><br><span class="line">          this.compName = &#x27;About&#x27;</span><br><span class="line">          break</span><br><span class="line">        case &#x27;#/setting&#x27;:</span><br><span class="line">          this.compName = &#x27;Setting&#x27;</span><br><span class="line">          break</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line">&lt;/script&gt;</span><br><span class="line"></span><br><span class="line">&lt;style&gt;</span><br><span class="line"></span><br><span class="line">&lt;/style&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这是第二种方案，区别在于监听了URL地址的hash变化：<code>window.onhashchange</code></p>
+<p>然后检测hash值，根据不同的hash地址渲染不同的组件。在URL地址栏可以看到hash地址的变化：</p>
+<p><code>http://localhost:8080/#/home</code>、<code>http://localhost:8080/#/about</code>、<code>http://localhost:8080/#/setting</code></p>
+<blockquote>
+<p>实际上vue-router就是基于这样的原理的。</p>
+</blockquote>
+<h4 id="vue-router"><a href="#vue-router" class="headerlink" title="vue-router"></a>vue-router</h4><p>vue-router是vue.js官方给出的路由解决方案，只能结合vue项目进行使用，能够轻松管理SPA项目中组件的切换。</p>
+<p><strong>使用步骤</strong></p>
+<p>① <strong>安装vue-router包</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install vue-router@3.5.2 -S</span><br></pre></td></tr></table></figure>
+
+
+
+<p>② <strong>创建路由模块</strong>（一个js文件就是一个模块）</p>
+<p>在src源代码目录下，新建<code>router/index.js</code>路由模块，并初始化以下代码：（这个过程中<code>router/index.js</code>是必须的，不能是别的名字，如果使用<code>vue-cli</code>创建项目的过程中选择了<code>vue-router</code>项则可以自动创建）</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">Vue</span> <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span></span><br><span class="line"><span class="keyword">import</span> <span class="title class_">VurRouter</span> <span class="keyword">from</span> <span class="string">&#x27;vue-router&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//调用Vue.use()函数，把VueRouter安装为Vue的插件</span></span><br><span class="line"><span class="title class_">Vue</span>.<span class="title function_">use</span>(<span class="title class_">VueRouter</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">//创建路由的实例对象</span></span><br><span class="line"><span class="keyword">const</span> router = <span class="keyword">new</span> <span class="title class_">VueRouter</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment">//向外共享路由的实例对象</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> router</span><br></pre></td></tr></table></figure>
+
+
+
+<p>③ <strong>导入并挂在路由模块</strong></p>
+<p>在<code>main.js</code>入口文件中：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">Vue</span> <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span></span><br><span class="line"><span class="keyword">import</span> <span class="title class_">App</span> <span class="keyword">from</span> <span class="string">&#x27;./App.vue&#x27;</span></span><br><span class="line"><span class="comment">//导入路由模块</span></span><br><span class="line"><span class="keyword">import</span> router <span class="keyword">from</span> <span class="string">&#x27;./router&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">Vue</span>(&#123;</span><br><span class="line">    <span class="attr">render</span>:<span class="function"><span class="params">h</span>=&gt;</span><span class="title function_">h</span>(<span class="title class_">App</span>),</span><br><span class="line">    <span class="comment">//挂在路由模块</span></span><br><span class="line">    <span class="attr">router</span>:router <span class="comment">//可以简写为router</span></span><br><span class="line">&#125;).$mount(<span class="string">&#x27;#app&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意</strong>：尽管路由模块位于 <code>./router/index.js</code>中，但是只需要<code>import router from &#39;./router&#39;</code>就能自动从该目录下的<code>index.js</code>中导入路由模块。实际上vue-cli选中vue-router之后自动生成的<code>main.js</code>中就是这么写的。</p>
+</blockquote>
+<p>④ <strong>声明路由链接和占位符</strong></p>
+<p>在vue组件中，使用<router-link>和<router-view>声明路由链接和占位符。（不推荐使用<a>）</a></router-view></router-link></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;router-link to=&quot;/home&quot;&gt;首页&lt;/router-link&gt;</span><br><span class="line">&lt;!--定义路由的占位符--&gt;</span><br><span class="line">&lt;touter-view&gt;&lt;/touter-view&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如果使用<code>vue-cli</code>选中<code>vue-router</code>之后自动创建的项目，前三步已经做好了。</p>
+</blockquote>
+<p><strong>声明路由匹配规则</strong></p>
+<p>在src/router/index.js路由模块中，通过<code>routes</code>数组证明路由的匹配规则：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> routes = [</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">path</span>: <span class="string">&#x27;/&#x27;</span>,</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;Home&#x27;</span>,</span><br><span class="line">    <span class="attr">component</span>: <span class="title class_">Home</span></span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">path</span>: <span class="string">&#x27;/about&#x27;</span>,</span><br><span class="line">    <span class="attr">name</span>: <span class="string">&#x27;About&#x27;</span>,</span><br><span class="line">    <span class="attr">component</span>:<span class="title class_">About</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> router = <span class="keyword">new</span> <span class="title class_">VueRouter</span>(&#123;</span><br><span class="line">  routes</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="vue-router的常见用法"><a href="#vue-router的常见用法" class="headerlink" title="vue-router的常见用法"></a>vue-router的常见用法</h4><h5 id="路由重定向"><a href="#路由重定向" class="headerlink" title="路由重定向"></a>路由重定向</h5><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">routes</span>:[</span><br><span class="line">    &#123;<span class="attr">path</span>:<span class="string">&#x27;/&#x27;</span>, <span class="attr">redirect</span>:<span class="string">&#x27;/home&#x27;</span>&#125;,</span><br><span class="line">    &#123;<span class="attr">path</span>:<span class="string">&#x27;/home&#x27;</span>,<span class="attr">component</span>:<span class="title class_">Home</span>&#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<h5 id="嵌套路由"><a href="#嵌套路由" class="headerlink" title="嵌套路由"></a>嵌套路由</h5><p>通过路由实现组件的嵌套展示</p>
+<p><img src="/2022/08/17/04.%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6%E3%80%81%E6%8F%92%E6%A7%BD%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E4%BB%A4%E5%92%8C%E8%B7%AF%E7%94%B1/image-20220802152718947.png" alt="image-20220802152718947"></p>
+<h5 id="子路由规则"><a href="#子路由规则" class="headerlink" title="子路由规则"></a>子路由规则</h5><p>通过children属性声明子路由匹配规则</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">path: &#x27;/about&#x27;,</span><br><span class="line">component:About,</span><br><span class="line">children:[</span><br><span class="line">  //通过children属性，嵌套声明自由路规则</span><br><span class="line">  &#123;path:&#x27;tab1&#x27;, component:Tab1&#125;,</span><br><span class="line">  &#123;path:&#x27;tab2&#x27;,component:Tab2&#125;</span><br><span class="line">]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意：children是一个数组，此外，子路由不需要加<code>/</code>，此时访问/about/tab1就会渲染Tab1组件。</p>
+</blockquote>
+<h5 id="动态路由匹配"><a href="#动态路由匹配" class="headerlink" title="动态路由匹配"></a>动态路由匹配</h5><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">path</span>:<span class="string">&#x27;/movie/:id&#x27;</span>,<span class="attr">component</span>:<span class="title class_">Movie</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在动态路由渲染出来的组件中，可以使用<code>this.$route.params</code>对象访问到动态匹配的参数值：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#123;this.$route.params.id&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了简化路由参数的获取形式，vue-router允许在路由规则中开启<strong>props传参</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;path:&#x27;/movie/:id&#x27;, component:Movie, props:true&#125;</span><br><span class="line">&lt;template&gt;</span><br><span class="line">	&lt;h3&gt;</span><br><span class="line">        &#123;&#123;id&#125;&#125;</span><br><span class="line">    &lt;/h3&gt;</span><br><span class="line">&lt;/template&gt;</span><br><span class="line"></span><br><span class="line">&lt;script&gt;</span><br><span class="line">	export default &#123;</span><br><span class="line">        props:[&#x27;id&#x27;]</span><br><span class="line">    &#125;</span><br><span class="line">&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>声明式导航和编程式导航</strong></p>
+<ul>
+<li>普通网页中点击链接跳转页面为声明式导航。例如<a> <route-link>等都是声明式导航。</route-link></a></li>
+</ul>
+<ul>
+<li><p>在浏览器中，调用API方法实现导航的方式为编程式导航，例如</p>
+<p>普通网页中调用location.href跳转到新页面的方式。</p>
+</li>
+</ul>
+<p>vue-router中的编程式导航API，常用的有：</p>
+<ul>
+<li><p><code>this.$router.push(&#39;hash地址&#39;)</code></p>
+<p>跳转到指定hash地址，并增加一条历史记录</p>
+</li>
+<li><p><code>this.$router.replace(&#39;hash地址&#39;)</code></p>
+<p>跳转到指定的hash地址，并替换掉当前的历史记录，replace不会增加历史记录，而是替换掉当前的历史记录。</p>
+</li>
+<li><p><code>this.$router.go(数值n)</code></p>
+<p>实现导航历史前进后退，常见的为1和-1， 为了方便提供了<code>this.$router.back()</code>和<code>this.$router.forward()</code></p>
+</li>
+</ul>
+<h5 id="导航守卫"><a href="#导航守卫" class="headerlink" title="导航守卫"></a>导航守卫</h5><p>导航守卫可以控制路由访问权限。</p>
+<p>全局前置守卫：每次发生路由的导航跳转时，都会触发全局前置守卫，因此，在全局前置守卫中，程序员可以对每个路由进行访问权限的控制：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> router = <span class="keyword">new</span> <span class="title class_">VueRouter</span>(&#123;...&#125;)</span><br><span class="line">                              </span><br><span class="line"><span class="comment">//调用路由实例对象的beforeEach方法，即可声明“全局前置守卫”</span></span><br><span class="line"><span class="comment">//每次发生路由导航跳转的时候，都会自动触发fn这个回调函数</span></span><br><span class="line">router.<span class="title function_">beforeEach</span>(fn)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">router.<span class="title function_">beforeEach</span>(<span class="function">(<span class="params">to,<span class="keyword">from</span>,next</span>)=&gt;</span>&#123;</span><br><span class="line">    <span class="comment">//to是将要访问的路由的信息对象</span></span><br><span class="line">    <span class="comment">//from是将要离开的路由的信息对象</span></span><br><span class="line">    <span class="comment">//next是一个函数，调用next表示放行，允许这次路由导航</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>例如：控制后台的访问权限</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">router.<span class="title function_">beforeEach</span>(to,<span class="keyword">from</span>,next)=&gt;&#123;</span><br><span class="line">    <span class="keyword">if</span>(to.<span class="property">path</span>===<span class="string">&#x27;/main&#x27;</span>)&#123;</span><br><span class="line">        <span class="keyword">const</span> token = <span class="variable language_">localStorage</span>.<span class="title function_">getItem</span>(<span class="string">&#x27;token&#x27;</span>)</span><br><span class="line">        <span class="keyword">if</span>(token)&#123;</span><br><span class="line">            <span class="title function_">next</span>() <span class="comment">//访问后台主页且有token值可以放行</span></span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="title function_">next</span>(<span class="string">&#x27;/login&#x27;</span>) <span class="comment">//访问后台主页但是没有token</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="comment">//访问的不是后台主页,直接放行</span></span><br><span class="line">        <span class="title function_">next</span>() </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zhu</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/04.%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6%E3%80%81%E6%8F%92%E6%A7%BD%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E4%BB%A4%E5%92%8C%E8%B7%AF%E7%94%B1/">https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/04.%E5%8A%A8%E6%80%81%E7%BB%84%E4%BB%B6%E3%80%81%E6%8F%92%E6%A7%BD%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E4%BB%A4%E5%92%8C%E8%B7%AF%E7%94%B1/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>LIGHT</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/vue/"># vue</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2022/08/17/06.vuex/">搞懂vuex——这一篇就够了</a>
+            
+            
+            <a class="next" rel="next" href="/2022/08/17/03.vue%E5%9F%BA%E7%A1%80/">vue基础</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zhu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>

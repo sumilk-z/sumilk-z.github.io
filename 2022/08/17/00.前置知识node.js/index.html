@@ -15,7 +15,7 @@
 
 
 
-<title>我的第一篇博客 | zcblog</title>
+<title>前置基础知识——node.js | zcblog</title>
 
 
 
@@ -198,7 +198,7 @@
     
     <article class="post-wrap">
         <header class="post-header">
-            <h1 class="post-title">我的第一篇博客</h1>
+            <h1 class="post-title">前置基础知识——node.js</h1>
             
                 <div class="post-meta">
                     
@@ -207,14 +207,14 @@
 
                     
                         <span class="post-time">
-                        Date: <a href="#">August 16, 2022&nbsp;&nbsp;23:20:19</a>
+                        Date: <a href="#">August 17, 2022&nbsp;&nbsp;12:00:19</a>
                         </span>
                     
                     
                         <span class="post-category">
                     Category:
                             
-                                <a href="/categories/%E9%97%B2%E6%9D%82/">闲杂</a>
+                                <a href="/categories/%E5%89%8D%E7%AB%AF/">前端</a>
                             
                         </span>
                     
@@ -289,7 +289,7 @@
 
 
 
-<h5 id="module对象"><a href="#module对象" class="headerlink" title="module对象"></a><strong>module对象</strong></h5><p>在每个js自定义模块中都有一个module对象，它里卖弄存储了和当前模块有关的信息</p>
+<h5 id="module对象"><a href="#module对象" class="headerlink" title="module对象"></a><strong>module对象</strong></h5><p>在每个js自定义模块中都有一个module对象，它里面弄存储了和当前模块有关的信息</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="variable language_">module</span>)</span><br></pre></td></tr></table></figure>
 
 <p>输出内容大致如下：</p>
@@ -343,10 +343,10 @@
 <figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;npm -v</span><br><span class="line"><span class="number">6</span>.<span class="number">14</span>.<span class="number">12</span></span><br></pre></td></tr></table></figure>
 
 <h5 id="包的安装和使用"><a href="#包的安装和使用" class="headerlink" title="包的安装和使用"></a>包的安装和使用</h5><p>安装包</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;npm install 包的完整名称</span><br><span class="line">&gt;npm i 包的完整名称</span><br></pre></td></tr></table></figure>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;npm install package_name</span><br><span class="line">#例如</span><br><span class="line">&gt;npm i package_name</span><br></pre></td></tr></table></figure>
 
 <p>安装指定版本的包：</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;npm install 包的完整名称@包的版本号</span><br><span class="line">&gt;npm install moment@<span class="number">2</span>.<span class="number">24</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;npm install package_name@package_version</span><br><span class="line">#例如</span><br><span class="line">&gt;npm install moment@<span class="number">2</span>.<span class="number">24</span>.<span class="number">0</span></span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p> 第一个数字表示大版本，第二个数字为功能版本，第三个版本为bug修复版本。“点分十进制格式”</p>
@@ -358,7 +358,7 @@
 <li><code>package-lock.json</code>配置文件用来记录<code>node_modules</code>目录下的每一个包的下载信息，例如包的名字，版本号，下载地址等。</li>
 </ul>
 <blockquote>
-<p>不要手动修改这node_modules或者package-lock.json文件中的任何代码，npm包管理工具会自动维护他们。</p>
+<p>不要手动修改这<code>node_modules</code>或者<code>package-lock.json</code>文件中的任何代码，<code>npm</code>包管理工具会自动维护他们。</p>
 </blockquote>
 <p><strong>实践</strong></p>
 <p>在node.js目录下执行命令：</p>
@@ -391,20 +391,26 @@
 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;node.js&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1.0.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;main&quot;</span><span class="punctuation">:</span> <span class="string">&quot;01.readFile.js&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;dependencies&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;moment&quot;</span><span class="punctuation">:</span> <span class="string">&quot;^2.29.4&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;devDependencies&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;scripts&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;test&quot;</span><span class="punctuation">:</span> <span class="string">&quot;echo \&quot;Error: no test specified\&quot; &amp;&amp; exit 1&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;keywords&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;author&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;license&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ISC&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
 
 <blockquote>
-<p>注意到<code>dependencies</code>节点记录了项目用到的第三方包，而且随着新包的安装，package.json文件会自动更新。</p>
+<p>注意到<code>dependencies</code>节点记录了项目用到的第三方包，而且随着新包的安装，<code>package.json</code>文件会自动更新。</p>
 </blockquote>
 <p><strong><code>dependencies</code>节点</strong></p>
 <p>使用<code>npm install</code>命令，可以一次性安装<code>package.json</code>中的<code>dependencies</code>节点中的包。</p>
+<blockquote>
+<p>适用于在安装别人的项目的时候，如果需要跑通项目，首先要通过<code>npm install</code>命令安装<code>package.json</code>文件中的包。</p>
+</blockquote>
 <p>卸载包：<code>npm uninstall moment</code></p>
 <p><code>npm</code>会从<code>node_package</code>目录中删除这个包，然后再从<code>package.json</code>文件的<code>dependencies</code>节点中删除这个包的记录。</p>
 <p><strong><code>devDependencies</code>节点</strong></p>
 <p>如果某些包<strong>只是在项目开发阶段用到，在项目上线之后不会用到</strong>，则建议把包记录到<code>devDependencies</code>节点中。</p>
 <p>如果在开发阶段和上线之后都需要用到，则放到<code>dependencies</code>节点中。</p>
 <p>可以使用以下命令，将包记录到<code>devDependencies</code>节点中</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm i 包名 -D</span><br><span class="line">//完整的命令是</span><br><span class="line">npm install 包名 --save-dev</span><br></pre></td></tr></table></figure>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm i package_name -D</span><br><span class="line">//完整的命令是</span><br><span class="line">npm install package_name --save-dev</span><br></pre></td></tr></table></figure>
 
 <p>例如：webpack包</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm install webpack -D </span><br><span class="line">npm install webpack --save-dev</span><br><span class="line">npm install --save-dev webpack //这样也是可以的</span><br></pre></td></tr></table></figure>
+
+<p>如果明确知道这个包是安装到<code>dependencies</code>节点下的，则可以指定 <code>-S</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install package_name -S //安装到dependencies节点下</span><br></pre></td></tr></table></figure>
 
 
 
@@ -414,7 +420,7 @@
 <blockquote>
 <p> 实践：输出结果 <code>https://registry.npm.taobao.org/</code></p>
 </blockquote>
-<p>也可以使用nrm工具，npm registry manager</p>
+<p>也可以使用nrm工具，<code>npm registry manager</code></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#全局安装nrm工具</span><br><span class="line">npm i nrm -g</span><br><span class="line"></span><br><span class="line">#查看可用的镜像源，npm是官方服务器</span><br><span class="line">nrm ls</span><br><span class="line">  npm ---------- https://registry.npmjs.org/</span><br><span class="line">  yarn --------- https://registry.yarnpkg.com/</span><br><span class="line">  tencent ------ https://mirrors.cloud.tencent.com/npm/</span><br><span class="line">  cnpm --------- https://r.cnpmjs.org/</span><br><span class="line">  taobao ------- https://registry.npmmirror.com/</span><br><span class="line">  npmMirror ---- https://skimdb.npmjs.com/registry/</span><br><span class="line"></span><br><span class="line">#切换镜像源</span><br><span class="line">nrm use taobao</span><br></pre></td></tr></table></figure>
 
 <h5 id="包的分类"><a href="#包的分类" class="headerlink" title="包的分类"></a>包的分类</h5><p>项目包：包括开发依赖包（<code>devDependencies</code>)和核心依赖包（<code>dependencies</code>）</p>
@@ -426,7 +432,7 @@
 <li><code>package.json</code>中必须包含<code>name,version,main</code>这三个属性，分别代表包的名字，版本号，包的入口</li>
 </ul>
 <h5 id="npm发布包"><a href="#npm发布包" class="headerlink" title="npm发布包"></a>npm发布包</h5><ul>
-<li>需要在npm网站上注册一个账号</li>
+<li>需要在<code>npm</code>网站上注册一个账号</li>
 <li>然后在终端中登录该账号<code>npm login</code></li>
 <li>记得将服务器切换为官方的服务器，而不能是镜像服务器</li>
 <li>切换到包的根目录下，执行命令 <code>npm publish</code>就可以发布包到npm上</li>
@@ -434,7 +440,7 @@
 </ul>
 <h5 id="模块的加载机制"><a href="#模块的加载机制" class="headerlink" title="模块的加载机制"></a>模块的加载机制</h5><ul>
 <li><p>优先从缓存中加载</p>
-<p>​    模块在第一次加载后会被缓存，多次调用<code>require()</code>不会导致模块的代码被多次执行。</p>
+<p>​    模块在第一次加载后会被缓存，<strong>多次调用<code>require()</code>不会导致模块的代码被多次执行</strong>。</p>
 </li>
 <li><p>自定义模块的加载机制</p>
 <p>使用<code>require()</code>加载自定义模块时，必须指定以<code>./</code>或者<code>../</code>开头的路径标识符，如果没有，<code>node</code>会把它当作内置模块或者第三方模块进行加载。</p>
@@ -446,7 +452,7 @@
 <li>补全<code>.node</code>扩展名进行加载</li>
 </ul>
 </li>
-<li><p>加载包的时候，先找到<code>package.json</code>中的<code>main</code>属性，加载<code>main</code>属性所指向的文件，那么就加载<code>index.js</code>文件。</p>
+<li><p>加载包的时候，先找到<code>package.json</code>中的<code>main</code>属性，加载<code>main</code>属性所指向的文件，否则就加载<code>index.js</code>文件，如果连<code>index.js</code>文件都没有则报错。</p>
 </li>
 </ul>
 
@@ -463,7 +469,7 @@
                 
                     <p class="copyright-item">
                         <span>Permalink:</span>
-                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2022/08/16/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2/">https://github.com/sumilk-z/sumilk-z.github.io/2022/08/16/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2/</a></span>
+                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/00.%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86node.js/">https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/00.%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86node.js/</a></span>
                     </p>
                 
                 
@@ -486,6 +492,10 @@
                 <span>Tag(s):</span>
                 <span class="tag">
                     
+                    
+                        <a href="/tags/node-js/"># node.js</a>
+                    
+                        
                 </span>
             </div>
             <div>
@@ -496,10 +506,10 @@
         </section>
         <section class="post-nav">
             
-                <a class="prev" rel="prev" href="/2022/08/17/00.%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86node.js/">前置基础知识——node.js</a>
+                <a class="prev" rel="prev" href="/2022/08/17/01.webpack/">前置基础知识——webpack</a>
             
             
-            <a class="next" rel="next" href="/2022/08/16/hello-world/">Hello World</a>
+            <a class="next" rel="next" href="/2022/08/16/%E6%88%91%E7%9A%84%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2/">我的第一篇博客</a>
             
         </section>
 

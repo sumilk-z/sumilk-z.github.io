@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zhu">
+
+
+
+    <meta name="description" content="这是一个个人博客">
+
+
+
+<title>前置基础知识——webpack | zcblog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const currentTheme = window.localStorage && window.localStorage.getItem('theme') || '';
+            const isDark = currentTheme === 'dark';
+            const pagebody = document.getElementsByTagName('body')[0]
+            if (isDark) {
+                pagebody.classList.add('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Dark"
+            } else {
+                pagebody.classList.remove('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Light"
+            }
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Zhu&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Zhu&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">前置基础知识——webpack</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zhu</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">August 17, 2022&nbsp;&nbsp;12:10:19</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/%E5%89%8D%E7%AB%AF/">前端</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <p>本笔记来源于视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1zq4y1p7ga?p=6&spm_id_from=pageDriver&vd_source=35fa3e44b90546361b663bf61eec4116">黑马vue2.0和vue3.0</a> </p>
+<p>另外实验项目所在地址为：<code> D:\AllProjects\vueProjects</code></p>
+<p>此外：<code>D:\Document\研究生\web前端\vue资料</code> 是该视频所配套的资料</p>
+<h2 id="前端工程化"><a href="#前端工程化" class="headerlink" title="前端工程化"></a>前端工程化</h2><p>实际上的前端开发：要求</p>
+<p><strong>模块化</strong>：js的模块化，css的模块化，资源的模块化。例如一个js文件就是一个module。</p>
+<p><strong>组件化</strong>：复用的UI结构，样式和行为。例如一个vue文件就是一个组件。</p>
+<p><strong>规范化</strong>：目录结构的华泛，编码规范化，接口规范化，文档规范化，git分支管理等。</p>
+<p><strong>自动化</strong>：自动化构建，自动部署，自动化测试。</p>
+<p>前端工程化的解决方案：</p>
+<p>早期的有：grunt，gulp。 目前主流的有：webpack，parcel</p>
+<h2 id="webpack的基本使用"><a href="#webpack的基本使用" class="headerlink" title="webpack的基本使用"></a>webpack的基本使用</h2><blockquote>
+<p>本节要求：需要知道什么是webpack以及如何使用webpack.</p>
+</blockquote>
+<h3 id="什么是webpack"><a href="#什么是webpack" class="headerlink" title="什么是webpack?"></a><strong>什么是webpack?</strong></h3><p>webpack是前端项目工程化的具体解决方案。</p>
+<p>主要功能：它提供了友好的前端模块化开发支持，以及代码压缩混淆，处理浏览器端javaScript的兼容性，性能优化等强大的功能。</p>
+<p>好处：让程序员把工作的重心放到具体功能的实现上，提高了前端开发效率和项目的可维护性。</p>
+<blockquote>
+<p>目前vue,react等前端项目，基本上都是基于webpack进行工程化开发的。</p>
+</blockquote>
+<p>可以参考这篇博客：<a target="_blank" rel="noopener" href="https://baijiahao.baidu.com/s?id=1719776791166963538&wfr=spider&for=pc">一文搞懂webpack的安装和配置</a>。</p>
+<h3 id="webpack的基本使用流程："><a href="#webpack的基本使用流程：" class="headerlink" title="webpack的基本使用流程："></a><strong>webpack的基本使用流程：</strong></h3><p>①创建一个英文名的空目录01.webpack</p>
+<p>②在cmd或者powershell中在该空目录下执行命令：<code>npm init -y</code>,表示初始化，npm会自动在根目录下创建一个<code>package.json</code>配置文件。（详情可以看node.js前置知识笔记）</p>
+<p>③在空目录下创建源代码文件目录：<code>src</code>,只能叫这个名字，因为webpack默认源代码在<code>src</code>文件下。</p>
+<p>④在src下创建<code>index.js</code>和<code>index.html</code>文件</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--通过命令 ul&gt;li&#123;这是第$个li&#125;*9，然后回车可以快速生成--&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">lang</span>=<span class="string">&quot;en&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">http-equiv</span>=<span class="string">&quot;X-UA-Compatible&quot;</span> <span class="attr">content</span>=<span class="string">&quot;IE=edge&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attr">content</span>=<span class="string">&quot;width=device-width, initial-scale=1.0&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">title</span>&gt;</span>Document<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;./index.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span> //导入js文件</span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">ul</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第1个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第2个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第3个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第4个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第5个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第6个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第7个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第8个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>这是第9个li<span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//使用ES6语法，导入jQuery</span></span><br><span class="line"><span class="keyword">import</span> $ <span class="keyword">from</span> <span class="string">&#x27;jquery&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//定义jQuey的入口函数</span></span><br><span class="line">$(<span class="keyword">function</span>(<span class="params"></span>)&#123;</span><br><span class="line">    $(<span class="string">&#x27;li:odd&#x27;</span>).<span class="title function_">css</span>(<span class="string">&#x27;background-color&#x27;</span>,<span class="string">&#x27;red&#x27;</span>)</span><br><span class="line">    $(<span class="string">&#x27;li:even&#x27;</span>).<span class="title function_">css</span>(<span class="string">&#x27;background-color&#x27;</span>,<span class="string">&#x27;black&#x27;</span>)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>⑤安装<code>jquery</code>: <code>npm install jquery -S</code> <code>-S</code>实际上是<code>--save</code>表示明确安装到<code>dependencies</code>节点下，即开发和发布阶段都需要用到的。（安装jquery是为了使用）,发现根目录下新建了文件夹<code>node_modules</code>，并且<code>package.json</code>文件中：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;dependencies&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line"><span class="attr">&quot;jquery&quot;</span><span class="punctuation">:</span> <span class="string">&quot;^3.6.0&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>⑥安装webpack：<code>npm install webpack@5.42.1 webpack-cli@4.7.2 -D</code> <code>-D</code>表示<code>--save-dev</code>即安装到<code>devDependencies</code>节点下，只在开发阶段使用。同理，<code>package.json</code>中：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;devDependencies&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line"><span class="attr">&quot;webpack&quot;</span><span class="punctuation">:</span> <span class="string">&quot;^5.42.1&quot;</span><span class="punctuation">,</span></span><br><span class="line"><span class="attr">&quot;webpack-cli&quot;</span><span class="punctuation">:</span> <span class="string">&quot;^4.7.2&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>⑦新建webpack配置文件：<code>webpack.config.js</code> 只能叫这个名字</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = &#123;</span><br><span class="line">    mode : <span class="string">&#x27;development&#x27;</span> <span class="comment">//mode模式用来指定构建的模式，可选值有development和production</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>development</code>:开发环境，不会对打包生成的文件进行代码压缩和性能优化，打包速度快，适合在开发阶段使用。</p>
+<p><code>production</code>:生产环境，会对打包生成的文件进行代码压缩和性能优化，打包速度很慢，仅适合在发布阶段使用。</p>
+<p>⑧在package.json的scripts节点下，新增dev脚本：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">&quot;scripts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;dev&quot;</span><span class="punctuation">:</span><span class="string">&quot;webpack&quot;</span> <span class="comment">//scripts节点下的脚本，可以通过npm run执行：npm run dev</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>实际上也可以叫其他名字，例如：devv，那么npm run devv实际上执行的是webpack脚本，webpack会进行打包。</p>
+</blockquote>
+<p>最后，执行命令，运行脚本：<code>npm run dev</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">asset bundle.js 323 KiB [emitted] (name: main)</span><br><span class="line">runtime modules 937 bytes 4 modules</span><br><span class="line">cacheable modules 282 KiB</span><br><span class="line">  ./src/index.js 204 bytes [built] [code generated]</span><br><span class="line">  ./node_modules/jquery/dist/jquery.js 282 KiB [built] [code generated]</span><br><span class="line">webpack 5.42.1 compiled successfully in 302 ms</span><br></pre></td></tr></table></figure>
+
+<p>发现在根目录下有<code>dist</code>文件夹，并且有打包好的<code>bundle.js</code>文件，文件中的内容并没有进行压缩，因为是开发模式。</p>
+<p>此时把html文档中改为：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;../dist/bundle.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span> //导入打包好的bundle.js文件</span><br></pre></td></tr></table></figure>
+
+<p>然后用浏览器打开<code>index.html</code>:即可看到实现了效果的页面。</p>
+<p><img src="/2022/08/17/01.webpack/image-20220727183319140.png" alt="image-20220727183319140"></p>
+<blockquote>
+<p>注意：之前直接引入index.js文档并不能实现效果，会报错误：Uncaught SyntaxError: Cannot use import statement outside a module. 而此处利用webpack打包将jquery代码和自己编写的js代码都打包到一个js文件中就可以生效了。</p>
+</blockquote>
+<h3 id="webpack-config-js文件的作用："><a href="#webpack-config-js文件的作用：" class="headerlink" title="webpack.config.js文件的作用："></a><strong>webpack.config.js文件的作用</strong>：</h3><p>是webpack的配置文件，执行webpack脚本时，在真正开始打包构建之前会先读取这个配置文件，从而基于给定的配置对项目进行打包。</p>
+<h3 id="webpack中的默认约定"><a href="#webpack中的默认约定" class="headerlink" title="webpack中的默认约定"></a><strong>webpack中的默认约定</strong></h3><p>在webpack 4.x和5.x的版本中，约定：</p>
+<p>①默认打包入口文件为<code>src</code>下的<code>index.js</code></p>
+<p>②默认打包输出文件路径为 <code>dist</code>下的<code>main.js</code> (会自动创建)</p>
+<p>但是这两个都可以在<code>webpack.config.js</code>配置文件中进行修改：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&#x27;path&#x27;</span>) <span class="comment">//导入node.js中专门操作路径的模块</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = &#123;</span><br><span class="line">    entry : path.<span class="title function_">join</span>(__dirname,<span class="string">&#x27;./src/index.js&#x27;</span>), <span class="comment">//入口文件的路径</span></span><br><span class="line">    <span class="attr">output</span>:&#123;</span><br><span class="line">        <span class="attr">path</span>:path.<span class="title function_">join</span>(__dirname,<span class="string">&#x27;./dist&#x27;</span>), <span class="comment">//输出文件的存放路径</span></span><br><span class="line">        <span class="attr">filename</span>:<span class="string">&#x27;bundle.js&#x27;</span> <span class="comment">//打包之后输出文件的名称</span></span><br><span class="line">    &#125;,</span><br><span class="line">    mode : <span class="string">&#x27;development&#x27;</span> <span class="comment">//mode模式用来指定构建的模式，可选值有development和production</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="webpack中的插件"><a href="#webpack中的插件" class="headerlink" title="webpack中的插件"></a>webpack中的插件</h2><p>通过安装和配置第三方插件，可以扩展webpack的能力，从而让webpack用起来更方便。最常用的插件有两个：</p>
+<ul>
+<li><p><strong>webpack-dev-server</strong></p>
+<p>会启动一个webpack服务器，每当修改了源码，webpack会自动进行项目的打包和构建，适用于开发阶段</p>
+</li>
+<li><p><strong>html-webpack-plugin</strong></p>
+<p>webpack中的html插件，可以通过此插件自定制index.html页面的内容</p>
+</li>
+</ul>
+<h3 id="webpack-dev-server"><a href="#webpack-dev-server" class="headerlink" title="webpack-dev-server"></a>webpack-dev-server</h3><h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><p><code>npm install webpack-dev-server@3.11.2 -D</code>  可以在网站 <a target="_blank" rel="noopener" href="https://www.npmjs.com/">https://www.npmjs.com</a> 上搜索该插件，然后有详细的信息，包括安装指令。</p>
+<p><img src="/image-20220727184221961" alt="image-20220727183319140"></p>
+<blockquote>
+<p> 注意安装命令是server而不是serve，另外，项目所在的目录不能有中文，否则无法使用。</p>
+</blockquote>
+<h4 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h4><p>NPM package.json scripts are a convenient and useful means to run locally installed binaries without having to be concerned about their full paths. Simply define a script as such:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;scripts&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;serve&quot;</span><span class="punctuation">:</span> <span class="string">&quot;webpack serve&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>在package.json中配置该命令。</p>
+</blockquote>
+<h4 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h4><p><code>npm run serve</code> webpack-dev-server 会启动一个实时打包的http服务器。</p>
+<p>此时会报错，无法使用，解决方案：<a target="_blank" rel="noopener" href="https://blog.csdn.net/zimeng303/article/details/121421088">webpack– Unable to load ‘@webpack-cli/serve’ command</a></p>
+<p>紧接着根据输出访问：<a target="_blank" rel="noopener" href="http://localhost:8080/">http://localhost:8080/</a></p>
+<p>发现会输出 cannot GET / <a target="_blank" rel="noopener" href="https://blog.csdn.net/Quindrich/article/details/123610351">webpack-dev-serve遇到Cannot GET 问题的解决方案</a></p>
+<p>即在配置文件中(webpack.config.js)设置：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">devServer</span>:&#123;</span><br><span class="line">        <span class="attr">static</span>:<span class="string">&quot;./&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="comment">//表示将当前目录下的资源作为静态资源，放到devServer上去，而devServer运行在localhost的8080端口。</span></span><br></pre></td></tr></table></figure>
+
+<p>实际上，这个节点还可以进行的配置有：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">devServer</span>:&#123;</span><br><span class="line">    <span class="attr">open</span>:<span class="literal">true</span>, <span class="comment">//初次打包完成后，自动打开浏览器</span></span><br><span class="line">    <span class="attr">host</span>:<span class="string">&#x27;127.0.0.1&#x27;</span>, <span class="comment">//实时打包所用的主机地址</span></span><br><span class="line">    <span class="attr">port</span>:<span class="number">80</span>, <span class="comment">//实时打包所用的端口号</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>重启服务，可以看到如下界面：</p>
+<p><img src="/2022/08/17/01.webpack/image-20220727192201626.png" alt="image-20220727192201626"></p>
+<p>点击src下的index.html可以看到和上面一样的效果，这是因为在index.html中，已经设置了：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">scripts</span> <span class="attr">src</span>=<span class="string">&quot;../dist/bundle.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">scripts</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>而bundle.js文件是我们提前打包好的，并且没有任何错误，因此可以看到对应的效果。</p>
+<p>如果删除dist目录，并且刷新index.html就看不到效果了。</p>
+<h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><p><strong>打包生成的文件去哪里了？</strong></p>
+<p>①不配置webpack-dev-server的情况下，webpack打包生成的文件，会放到实际的物理磁盘上。</p>
+<ul>
+<li>严格遵守在webpack.config.js中指定的输出路径，不指定则为dist/index.js</li>
+</ul>
+<p>②配置了webpack-dev-serve之后，打包生成的文件放到了内存中</p>
+<ul>
+<li>不再根据output节点指定的路径存放到实际的物理磁盘上</li>
+<li>提高了实时打包输出的性能，因为内存比物理磁盘读取速度快很多</li>
+</ul>
+<p><strong>如何访问生成到内存中的文件？</strong></p>
+<p>默认放到了项目的根目录中，而且是虚拟的，不可见的。（可能是为了防止程序员对其进行修改）</p>
+<ul>
+<li><p>可以直接<strong>使用<code>/</code>表示项目根目录，后面跟上要访问的文件名称</strong>，例如此处打包之后的文件是bundle.js.那么要访问内存中的这个文件，只需要 <a target="_blank" rel="noopener" href="http://localhost:8080/bundle.js%E5%8D%B3%E5%8F%AF%E8%AE%BF%E9%97%AE%E3%80%82">http://localhost:8080/bundle.js即可访问。</a> 可以发现bundle.js文件并没有压缩，因为还是在开发环境下。</p>
+</li>
+<li><p>而在index.html中要引用也只需要</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">scripts</span> <span class="attr">src</span>=<span class="string">&#x27;/bundle.js&#x27;</span>&gt;</span><span class="tag">&lt;/<span class="name">scripts</span>&gt;</span></span><br><span class="line">#而不是之前的物理磁盘上的位置</span><br><span class="line"><span class="tag">&lt;<span class="name">scripts</span> <span class="attr">src</span>=<span class="string">&#x27;./dist/bundle.js&#x27;</span>&gt;</span><span class="tag">&lt;/<span class="name">scripts</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+<blockquote>
+<p>特别注意是<code>/bundle.js</code>,而不是<code>./bundle.js</code> ，前者表示内存中访问该资源，后者表示当前路径下的bundle.js,即物理磁盘上的文件地址。</p>
+</blockquote>
+<p><strong>实践</strong></p>
+<p>我们只需要对index.js稍作修改，例如添加注释，并保存，然后触发webpack-dev-server进行重新打包，此时本地不会生成dist/bundle.js文件。 而我们对index.html引用的js文件修改成<code>/bundle.js</code>,此时访问<a target="_blank" rel="noopener" href="http://localhost:8080/src%E5%8F%AF%E4%BB%A5%E7%9C%8B%E5%88%B0%E5%92%8C%E4%B8%8A%E9%9D%A2%E4%B8%80%E6%A0%B7%E7%9A%84%E6%95%88%E6%9E%9C%E3%80%82">http://localhost:8080/src可以看到和上面一样的效果。</a></p>
+<blockquote>
+<p>index.html 文件在src目录下，用浏览器访问一个目录会默认渲染该目录下的index.html文档。 </p>
+<p>如果把index.html文件复制到根目录，那么我们只需要访问 <a target="_blank" rel="noopener" href="http://localhost:8080/">http://localhost:8080/</a> 也可以直接渲染index.html的内容。</p>
+</blockquote>
+<p>下面的插件可以实现这个功能。</p>
+<h3 id="html-webpack-plugin"><a href="#html-webpack-plugin" class="headerlink" title="html-webpack-plugin"></a>html-webpack-plugin</h3><p>是webpack中的HTML插件，可以通过此插件自定制index.html页面的内容。</p>
+<h4 id="安装-1"><a href="#安装-1" class="headerlink" title="安装"></a>安装</h4><p><code>npm install html-webpack-plugin@5.3.2 -D</code></p>
+<h4 id="配置-1"><a href="#配置-1" class="headerlink" title="配置"></a>配置</h4><p>在webpack.confgi.js中进行配置</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//导入html插件，得到一个构造函数</span></span><br><span class="line"><span class="keyword">const</span> <span class="title class_">HtmlPlugin</span> = <span class="built_in">require</span>(<span class="string">&#x27;html-webpack-plugin&#x27;</span>)</span><br><span class="line"><span class="comment">//创建html插件的实例对象，传入一个对象，对象中是两个参数</span></span><br><span class="line"><span class="keyword">const</span> htmlPlugin = <span class="keyword">new</span> <span class="title class_">HtmlPlugin</span>(&#123;</span><br><span class="line">    <span class="attr">template</span>:<span class="string">&#x27;./src/index.html&#x27;</span>, <span class="comment">//指定原文件的存放路径</span></span><br><span class="line">    <span class="attr">filename</span>:<span class="string">&#x27;./index.html&#x27;</span>, <span class="comment">//指定生成的文件的存放路径</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = &#123;</span><br><span class="line">   ... <span class="comment">//省略了以前的配置</span></span><br><span class="line">    <span class="attr">plugins</span>:[htmlPlugin] <span class="comment">//通过plugins节点，使得htmlPlugin插件生效</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="使用-1"><a href="#使用-1" class="headerlink" title="使用"></a>使用</h4><p>修改配置之后，重新启动服务 npm run serve,然后此时访问<a target="_blank" rel="noopener" href="http://localhost:8080/%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E7%9C%8B%E5%88%B0index.html%E9%A1%B5%E9%9D%A2%E6%B8%B2%E6%9F%93%E7%9A%84%E5%86%85%E5%AE%B9%E4%BA%86%E3%80%82">http://localhost:8080/可以直接看到index.html页面渲染的内容了。</a></p>
+<h4 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h4><p>①通过HTML插件复制到项目根目录中的index.html页面，<strong>也被放到了内存中</strong>，在本地磁盘是看不到的。</p>
+<p>②HTML插件在生成的index.html页面，<strong>自动注入了打包的bundle.js文件。</strong></p>
+<p>即我们将src/index.html中的这一行注释掉：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- &lt;script src=&quot;/bundle.js&quot;&gt;&lt;/script&gt;  --&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>访问<a target="_blank" rel="noopener" href="http://localhost:8080/">http://localhost:8080/</a> 同样可以得到渲染后的页面结果。</p>
+<p>到目前为止，webpack.config.js中的完整内容为：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&#x27;path&#x27;</span>)</span><br><span class="line"><span class="comment">//导入html插件，得到一个构造函数</span></span><br><span class="line"><span class="keyword">const</span> <span class="title class_">HtmlPlugin</span> = <span class="built_in">require</span>(<span class="string">&#x27;html-webpack-plugin&#x27;</span>)</span><br><span class="line"><span class="comment">//创建html插件的实例对象，传入一个对象，对象中是两个参数</span></span><br><span class="line"><span class="keyword">const</span> htmlPlugin = <span class="keyword">new</span> <span class="title class_">HtmlPlugin</span>(&#123;</span><br><span class="line">    <span class="attr">template</span>:<span class="string">&#x27;./src/index.html&#x27;</span>, <span class="comment">//指定原文件的存放路径</span></span><br><span class="line">    <span class="attr">filename</span>:<span class="string">&#x27;./index.html&#x27;</span>, <span class="comment">//指定生成的文件的存放路径</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = &#123;</span><br><span class="line">    <span class="attr">entry</span>: path.<span class="title function_">join</span>(__dirname,<span class="string">&#x27;./src/index.js&#x27;</span>),</span><br><span class="line">    <span class="attr">output</span>:&#123;</span><br><span class="line">        path : path.<span class="title function_">join</span>(__dirname,<span class="string">&#x27;./dist&#x27;</span>),</span><br><span class="line">        filename : <span class="string">&#x27;bundle.js&#x27;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    mode : <span class="string">&#x27;development&#x27;</span>, <span class="comment">//mode模式用来指定构建的模式，可选值有development和production</span></span><br><span class="line">    <span class="attr">devServer</span>:&#123;</span><br><span class="line">        <span class="attr">static</span>:<span class="string">&quot;./&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">plugins</span>:[htmlPlugin] <span class="comment">//通过plugins节点，使得htmlPlugin插件生效</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="webpack中的loader"><a href="#webpack中的loader" class="headerlink" title="webpack中的loader"></a>webpack中的loader</h2><p><strong>问题引入</strong></p>
+<p>在实际开发过程中，webpack默认只能打包js后缀结尾的模块，其他非js结尾的模块需要调用loader加载器才能正常打包，否则会报错。</p>
+<p>loader加载器的作用：协助webpack打包处理特定的文件模块，比如：</p>
+<p>css-loader, less-loader</p>
+<p><strong>babel-loader</strong> :可以打包处理webpack无法处理的高级JS语法。</p>
+<h3 id="loader的调用过程"><a href="#loader的调用过程" class="headerlink" title="loader的调用过程"></a>loader的调用过程</h3><p><img src="/2022/08/17/01.webpack/image-20220727195956232.png" alt="image-20220727195956232"></p>
+<h2 id="打包发布"><a href="#打包发布" class="headerlink" title="打包发布"></a>打包发布</h2><h3 id="配置打包命令"><a href="#配置打包命令" class="headerlink" title="配置打包命令"></a>配置打包命令</h3><p>在package.json配置文件中新增build命令。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;scripts&quot;</span>: &#123;</span><br><span class="line"><span class="string">&quot;dev&quot;</span>: <span class="string">&quot;webpack&quot;</span>,</span><br><span class="line"><span class="string">&quot;serve&quot;</span>: <span class="string">&quot;webpack serve&quot;</span>,</span><br><span class="line"><span class="string">&quot;build&quot;</span>:<span class="string">&quot;webpack --mode production&quot;</span>, </span><br><span class="line"><span class="string">&quot;test&quot;</span>: <span class="string">&quot;echo \&quot;Error: no test specified\&quot; &amp;&amp; exit 1&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>–mode用来指定webpack的运行模式，production代表生产环境，webpack会进行代码压缩和性能优化。</p>
+<h3 id="把不同的资源归类到一个目录中"><a href="#把不同的资源归类到一个目录中" class="headerlink" title="把不同的资源归类到一个目录中"></a>把不同的资源归类到一个目录中</h3><p>在webpack.config.js配置文件的output节点中，</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">output</span>:&#123;</span><br><span class="line">    path : path.<span class="title function_">join</span>(__dirname,<span class="string">&#x27;./dist&#x27;</span>),</span><br><span class="line">    <span class="comment">//明确告诉webpack把生成的bundle.js文件放到dist目录下的js子目录中</span></span><br><span class="line">    filename : <span class="string">&#x27;js/bundle.js&#x27;</span></span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="自动清理dist目录下的旧文件"><a href="#自动清理dist目录下的旧文件" class="headerlink" title="自动清理dist目录下的旧文件"></a>自动清理dist目录下的旧文件</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install clean-webpack-plugin@<span class="number">3.0</span><span class="number">.0</span> -D</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//按需导入插件，得到构造函数后，创建插件的实例对象</span></span><br><span class="line"><span class="keyword">const</span> &#123;<span class="title class_">CleanWebpackPlugin</span>&#125; = <span class="built_in">require</span>(<span class="string">&#x27;clean-webpack-pllugin&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> cleanPlugin = <span class="keyword">new</span> <span class="title class_">CleanWebpackPlugin</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment">//挂在插件</span></span><br><span class="line"><span class="attr">plugins</span>:[htmlPlugin,cleanPlugin]</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Source-Map"><a href="#Source-Map" class="headerlink" title="Source Map"></a>Source Map</h2><p><strong>问题导入</strong></p>
+<p>前端项目在投入生产环境之前，都需要对javascript源代码进行压缩混淆，从而减小文件的体积，提高文件的加载效率。此时：</p>
+<ul>
+<li>对压缩混淆后的代码debug是一件极其困难的事情</li>
+<li>变量被替换成没有任何语义的名称</li>
+<li>空行和注释被剔除掉</li>
+</ul>
+<p><strong>因此需要一个map来映射压缩后的js代码和源代码，以便能够找到出错的源代码的位置。</strong></p>
+<p>source map就是一个信息文件，里面存储着位置信息。</p>
+<p>开发环境下，webpack默认启用了source map功能，当程序出错的时，可以直接在控制台提示错误行的位置，并定位到具体的源代码。</p>
+<p>在webpack.config.js中进行配置：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">module</span>.<span class="property">exports</span> = &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">//eval-source-map 仅限在开发模式下用，不建议在生产模式下使用</span></span><br><span class="line">    <span class="comment">//此选项生成的sourcemap能够保证运行时报错的行数与源代码的行数保持一致。</span></span><br><span class="line">    <span class="attr">devtool</span>:<span class="string">&#x27;eval-source-map&#x27;</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>另外还有：</p>
+<ul>
+<li><p>nosources-source-map : 指定为报错的具体行数，不暴露源码</p>
+</li>
+<li><p>source-map: 定位报错的行数，且暴露源码</p>
+</li>
+</ul>
+<p><strong>实际开发中需要用到webpack么？</strong></p>
+<p>答：不需要，实际开发中使用命令行工具（command line CLI)一键生成带有webpack的项目。开箱即用，所有的webpack配置都是现成的。</p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zhu</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/01.webpack/">https://github.com/sumilk-z/sumilk-z.github.io/2022/08/17/01.webpack/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>LIGHT</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/webpack/"># webpack</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2022/08/17/02.vue%E6%8C%87%E4%BB%A4/">vue基础指令</a>
+            
+            
+            <a class="next" rel="next" href="/2022/08/17/00.%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86node.js/">前置基础知识——node.js</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zhu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>
