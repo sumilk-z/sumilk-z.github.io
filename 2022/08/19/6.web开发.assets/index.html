@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zhu">
+
+
+
+    <meta name="description" content="这是一个个人博客">
+
+
+
+<title>JDBC、Maven和MyBatis | zcblog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const currentTheme = window.localStorage && window.localStorage.getItem('theme') || '';
+            const isDark = currentTheme === 'dark';
+            const pagebody = document.getElementsByTagName('body')[0]
+            if (isDark) {
+                pagebody.classList.add('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Dark"
+            } else {
+                pagebody.classList.remove('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Light"
+            }
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Zhu&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Zhu&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">JDBC、Maven和MyBatis</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zhu</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">August 19, 2022&nbsp;&nbsp;10:55:19</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/Java/">Java</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h2><p>命令行常见的命令(<strong>mysql不区分大小写</strong>)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&gt;mysql -u root -p</span><br><span class="line">*****</span><br><span class="line">&gt;show database;</span><br><span class="line">&gt;use database_name;</span><br><span class="line">&gt;show tables;</span><br><span class="line">&gt;desc table_name;</span><br><span class="line">&gt;create database if not exist database_name;</span><br><span class="line">&gt;drop database if exist database_name;</span><br></pre></td></tr></table></figure>
+
+<p>创建一个表</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">create table tb_user&#123;</span><br><span class="line">id int,</span><br><span class="line">username varchar(20),</span><br><span class="line">password varchar(32)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>数据类型</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">tinyint: 小整数型，1个字节</span><br><span class="line">int:大整数型，4个字节</span><br><span class="line">double:浮点型 eg: score double(5,2); 5是总长度，2是小数点后保留的位数</span><br><span class="line">---------------------------------------------------------------</span><br><span class="line">date: 日期，只包含年月日</span><br><span class="line">datetime:日期和时间</span><br><span class="line">---------------------------------------------------------------</span><br><span class="line">char:定长字符串</span><br><span class="line">varchar:变长字符串</span><br></pre></td></tr></table></figure>
+
+
+
+<p>修改操作</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">alter table student rename stu; #改名</span><br><span class="line">alter table student add address varchar(50);#新增一列</span><br><span class="line">alter table student modify address char(50); #修改数据类型</span><br><span class="line">alter table drop address; #删除一列</span><br></pre></td></tr></table></figure>
+
+
+
+<p>添加数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">insert into student(id,name,gender,birthday,score,email,tel,status) values(0,&#x27;jack&#x27;,&#x27;男&#x27;,&#x27;1999-10-18&#x27;,100,&#x27;zhucuii@163.com&#x27;,&#x27;18098863110&#x27;,1);</span><br><span class="line">insert into student values(1,&#x27;alex&#x27;,&#x27;女&#x27;,&#x27;1999-10-11&#x27;,99,&#x27;alex@163.com&#x27;,&#x27;18098863110&#x27;,0);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>修改数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">update student set gender=&#x27;男&#x27; where name=&#x27;alex&#x27;;</span><br><span class="line">delete from student where name=&#x27;alex&#x27;;</span><br><span class="line">delete from student; #删除整个表的数据</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>查询数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">select * from stu where english is NULL;</span><br><span class="line">insert into stu values(&#x27;9&#x27;,&#x27;小红&#x27;,18,&#x27;女&#x27;,NULL,99.2,98.3,&#x27;1999-10-10&#x27;);</span><br><span class="line">select * from stu where name like &#x27;马%&#x27;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p> 注意：NULL在排序中是最小的，如果是降序排序则排最后，如果是升序排序则排第一个。</p>
+</blockquote>
+<p>分组查询</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select sex,avg(math),count(*) from stu where math&gt;70 group by sex having count(*)&gt;1;</span><br></pre></td></tr></table></figure>
+
+<p>having最最终分组后的结果进行选择，比如这里选择结果数目大于1的分组。</p>
+<p><strong>where 和 having的区别：</strong></p>
+<ul>
+<li><p>1.执行时机不一样，where是分组之前进行限定，不满足where条件不参与分组，而having是对分组之后的结果进行过滤。</p>
+</li>
+<li><p>2.可判断的条件不一样，where不能对聚合函数进行判断，having可以。</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">drop table emp if exists;</span><br><span class="line">create table emp(</span><br><span class="line">id int primary key auto_increment, -- 员工id，主键且自增长</span><br><span class="line">ename varchar(50) not null unique, -- 员工姓名，非空且唯一</span><br><span class="line">joindate date not null, -- 入职日期非空</span><br><span class="line">salary double(7,2) not null, -- 工资，非空</span><br><span class="line">bonus double(7,2) default 0); -- 奖金，默认为0</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#删除外键 </span><br><span class="line">alter table emp drop foreign key fk_emp_dept; </span><br><span class="line">#增加外键 </span><br><span class="line">alter table emp add constraint fk_emp_dept foreign key(dept_id) references dept(id);</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="JDBC"><a href="#JDBC" class="headerlink" title="JDBC"></a>JDBC</h2><blockquote>
+<p>JDBC  就是使用Java语言操作关系型数据库的一套API</p>
+<p>全称：( Java DataBase Connectivity ) Java 数据库连接</p>
+</blockquote>
+<ul>
+<li><p>创建工程，导入驱动jar包</p>
+</li>
+<li><p> 注册驱动</p>
+</li>
+</ul>
+  <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>获取连接</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection conn <span class="operator">=</span> DriverManager.getConnection(url, username, password);</span><br></pre></td></tr></table></figure>
+
+<p>Java代码需要发送SQL给MySQL服务端，就需要先建立连接</p>
+</li>
+<li><p>定义SQL语句</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">String <span class="keyword">sql</span> <span class="operator">=</span>  “<span class="keyword">update</span>…” ;</span><br></pre></td></tr></table></figure></li>
+<li><p>获取执行SQL对象</p>
+<p>执行SQL语句需要SQL执行对象，而这个执行对象就是Statement对象</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Statement stmt <span class="operator">=</span> conn.createStatement();</span><br></pre></td></tr></table></figure></li>
+<li><p>执行SQL</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">stmt.executeUpdate(<span class="keyword">sql</span>);  </span><br></pre></td></tr></table></figure></li>
+<li><p>处理返回结果</p>
+</li>
+<li><p>释放资源</p>
+</li>
+</ul>
+<h4 id="JDBC使用示例"><a href="#JDBC使用示例" class="headerlink" title="JDBC使用示例"></a>JDBC使用示例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JDBCDemo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> ClassNotFoundException, SQLException &#123;</span><br><span class="line">        Class.forName(<span class="string">&quot;com.mysql.jdbc.Driver&quot;</span>);</span><br><span class="line">        <span class="type">String</span> <span class="variable">url</span> <span class="operator">=</span> <span class="string">&quot;jdbc:mysql://127.0.0.1:3306/db_test&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">username</span> <span class="operator">=</span> <span class="string">&quot;root&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">password</span> <span class="operator">=</span> <span class="string">&quot;xxxxxx&quot;</span>;</span><br><span class="line">        <span class="keyword">final</span> <span class="type">Connection</span> <span class="variable">connection</span> <span class="operator">=</span> DriverManager.getConnection(url, username, password);</span><br><span class="line">        <span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;update tb_user set password=456 where username=\&quot;zhangsan\&quot;&quot;</span>;</span><br><span class="line">        <span class="keyword">final</span> <span class="type">Statement</span> <span class="variable">statement</span> <span class="operator">=</span> connection.createStatement();</span><br><span class="line">        <span class="keyword">final</span> <span class="type">int</span> <span class="variable">count</span> <span class="operator">=</span> statement.executeUpdate(sql);</span><br><span class="line">        System.out.println(count);</span><br><span class="line">        statement.close();</span><br><span class="line">        connection.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>语法：<code>jdbc:mysql://ip地址(域名):端口号/数据库名称?参数键值对1&amp;参数键值对2…</code></p>
+<p>示例：<code>jdbc:mysql://127.0.0.1:3306/db1</code></p>
+<ul>
+<li>如果连接的是本机mysql服务器，并且mysql服务默认端口是3306，则url可以简写为：jdbc:mysql:///数据库名称?参数键值对,即省略了IP地址和端口号</li>
+<li>配置 useSSL=false 参数，禁用安全连接方式，解决警告提示</li>
+</ul>
+<h4 id="JDBC手动提交事务"><a href="#JDBC手动提交事务" class="headerlink" title="JDBC手动提交事务"></a>JDBC手动提交事务</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JDBCDemo3_Connection</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="comment">//1. 注册驱动</span></span><br><span class="line">        <span class="comment">//Class.forName(&quot;com.mysql.jdbc.Driver&quot;);</span></span><br><span class="line">        <span class="comment">//2. 获取连接：如果连接的是本机mysql并且端口是默认的 3306 可以简化书写</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">url</span> <span class="operator">=</span> <span class="string">&quot;jdbc:mysql:///db1?useSSL=false&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">username</span> <span class="operator">=</span> <span class="string">&quot;root&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">password</span> <span class="operator">=</span> <span class="string">&quot;1234&quot;</span>;</span><br><span class="line">        <span class="type">Connection</span> <span class="variable">conn</span> <span class="operator">=</span> DriverManager.getConnection(url, username, password);</span><br><span class="line">        <span class="comment">//3. 定义sql</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">sql1</span> <span class="operator">=</span> <span class="string">&quot;update account set money = 3000 where id = 1&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">sql2</span> <span class="operator">=</span> <span class="string">&quot;update account set money = 3000 where id = 2&quot;</span>;</span><br><span class="line">        <span class="comment">//4. 获取执行sql的对象 Statement</span></span><br><span class="line">        <span class="type">Statement</span> <span class="variable">stmt</span> <span class="operator">=</span> conn.createStatement();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">        	<span class="comment">//按住ctrl + alt + t 可以选择自动生成try catch包裹</span></span><br><span class="line">            <span class="comment">// ============开启事务==========</span></span><br><span class="line">            conn.setAutoCommit(<span class="literal">false</span>);</span><br><span class="line">            <span class="comment">//5. 执行sql</span></span><br><span class="line">            <span class="type">int</span> <span class="variable">count1</span> <span class="operator">=</span> stmt.executeUpdate(sql1);<span class="comment">//受影响的行数</span></span><br><span class="line">            <span class="comment">//6. 处理结果</span></span><br><span class="line">            System.out.println(count1);</span><br><span class="line">            <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">3</span>/<span class="number">0</span>;</span><br><span class="line">            <span class="comment">//5. 执行sql</span></span><br><span class="line">            <span class="type">int</span> <span class="variable">count2</span> <span class="operator">=</span> stmt.executeUpdate(sql2);<span class="comment">//受影响的行数</span></span><br><span class="line">            <span class="comment">//6. 处理结果</span></span><br><span class="line">            System.out.println(count2);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// ============提交事务==========</span></span><br><span class="line">            <span class="comment">//程序运行到此处，说明没有出现任何问题，则需求提交事务</span></span><br><span class="line">            conn.commit();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="comment">// ============回滚事务==========</span></span><br><span class="line">            <span class="comment">//程序在出现异常时会执行到这个地方，此时就需要回滚事务</span></span><br><span class="line">            conn.rollback();</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//7. 释放资源</span></span><br><span class="line">        stmt.close();</span><br><span class="line">        conn.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="PreparedStatement"><a href="#PreparedStatement" class="headerlink" title="PreparedStatement"></a>PreparedStatement</h4><blockquote>
+<p>预编译SQL语句并执行：预防SQL注入问题</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">pwd</span> <span class="operator">=</span> <span class="string">&quot;&#x27; or &#x27;1&#x27; = &#x27;1&quot;</span>;</span><br><span class="line"><span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;select * from tb_user where username = &#x27;&quot;</span> + name + <span class="string">&quot;&#x27; and password = &#x27;&quot;</span>  +pwd + <span class="string">&quot;&#x27;&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tb_user <span class="type">where</span> <span class="variable">username</span> <span class="operator">=</span> <span class="string">&#x27;sjdljfld&#x27;</span> <span class="type">and</span> <span class="variable">password</span> <span class="operator">=</span> <span class="string">&#x27;&#x27;</span>or <span class="string">&#x27;1&#x27;</span> = <span class="string">&#x27;1&#x27;</span>; <span class="comment">//永远都是true</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SQL语句中的参数值，使用？占位符替代</span></span><br><span class="line"><span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;select * from user where username = ? and password = ?&quot;</span>;</span><br><span class="line"><span class="comment">// 通过Connection对象获取，并传入对应的sql语句</span></span><br><span class="line"><span class="type">PreparedStatement</span> <span class="variable">pstmt</span> <span class="operator">=</span> conn.prepareStatement(sql);</span><br><span class="line"><span class="comment">//传入值，1和2表示第几个？</span></span><br><span class="line">pstmt.setString(<span class="number">1</span>,name);</span><br><span class="line">pstmt.setString(<span class="number">2</span>,pwd);</span><br></pre></td></tr></table></figure>
+
+<p><code>PreparedStatement</code>的原理是将特殊字符进行了转义，转义的SQL如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select * from tb_user <span class="type">where</span> <span class="variable">username</span> <span class="operator">=</span> <span class="string">&#x27;sjdljfld&#x27;</span> <span class="type">and</span> <span class="variable">password</span> <span class="operator">=</span> <span class="string">&#x27;\&#x27;or \&#x27;1\&#x27; = \&#x27;1&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>进行转义之后就不会出现这种情况</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27;1&#x27;</span> = <span class="string">&#x27;1&#x27;</span> ; <span class="comment">//因为&#x27;不代表原来的含义了，而是被转义成为了普通的字符。</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="ResultSet"><a href="#ResultSet" class="headerlink" title="ResultSet"></a>ResultSet</h4><p>当查询之后，返回结果为ResultSet</p>
+<blockquote>
+<p>boolean next()</p>
+<ul>
+<li>将光标从当前位置向前移动一行</li>
+<li>判断当前行是否为有效行</li>
+</ul>
+<p>方法返回值说明：</p>
+<ul>
+<li>true ： 有效行，当前行有数据</li>
+<li>false ： 无效行，当前行没有数据</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>xxx getXxx(参数)：获取数据</p>
+<ul>
+<li>xxx : 数据类型；如： int getInt(参数) ；String getString(参数)</li>
+<li>参数<ul>
+<li>int类型的参数：列的编号，从1开始</li>
+<li>String类型的参数： 列的名称</li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p>get方法参数有两种形式：一种是列的编号，从1开始，另一种是列的名称为字符串</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;select * from tb_user;&quot;</span>;</span><br><span class="line"><span class="type">Statement</span> <span class="variable">statement</span> <span class="operator">=</span> connection.createStatement();</span><br><span class="line"><span class="type">ResultSet</span> <span class="variable">resultSet</span> <span class="operator">=</span> statement.executeQuery(sql);</span><br><span class="line"><span class="keyword">while</span>(resultSet.next())&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">id</span> <span class="operator">=</span> resultSet.getInt(<span class="number">1</span>);<span class="comment">//or getInt(&quot;id&quot;);</span></span><br><span class="line">    <span class="type">String</span> <span class="variable">name</span> <span class="operator">=</span> resultSet.getString(<span class="string">&quot;username&quot;</span>);</span><br><span class="line">    <span class="type">String</span> <span class="variable">pword</span> <span class="operator">=</span> resultSet.getString(<span class="string">&quot;password&quot;</span>);<span class="comment">//or getString(3)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h4><p>需求：查询account账户表数据，封装为Account对象中，并且存储到ArrayList集合中</p>
+<p>首先在数据库中创建表</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">create table account(</span><br><span class="line">id int primary key auto_increment,</span><br><span class="line">name varchar(50) not null unique,</span><br><span class="line">money double(7,2) default 0);</span><br></pre></td></tr></table></figure>
+
+<p>然后插入一些合法的数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">insert into account(name,money) values(&quot;zhangsan&quot;,100),(&quot;lisi&quot;,200);</span><br></pre></td></tr></table></figure>
+
+<p>封装一个Account对象</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Account</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> id;</span><br><span class="line">    <span class="keyword">public</span> String name;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">double</span> money;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Account</span><span class="params">(<span class="type">int</span> id, String name, <span class="type">double</span> money)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.id = id;</span><br><span class="line">        <span class="built_in">this</span>.name = name;</span><br><span class="line">        <span class="built_in">this</span>.money = money;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">getId</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> id;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setId</span><span class="params">(<span class="type">int</span> id)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.id = id;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">getName</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setName</span><span class="params">(String name)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">double</span> <span class="title function_">getMoney</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> money;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setMoney</span><span class="params">(<span class="type">double</span> money)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.money = money;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">toString</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Account&#123;&quot;</span> +</span><br><span class="line">                <span class="string">&quot;id=&quot;</span> + id +</span><br><span class="line">                <span class="string">&quot;, name=&#x27;&quot;</span> + name + <span class="string">&#x27;\&#x27;&#x27;</span> +</span><br><span class="line">                <span class="string">&quot;, money=&quot;</span> + money +</span><br><span class="line">                <span class="string">&#x27;&#125;&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>alt+inseret：可以自动插入getter setter toString 以及构造函数等。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;select * from account&quot;</span>;</span><br><span class="line"><span class="type">Statement</span> <span class="variable">statement</span> <span class="operator">=</span> connection.createStatement();</span><br><span class="line"><span class="type">ResultSet</span> <span class="variable">res</span> <span class="operator">=</span> statement.executeQuery(sql);</span><br><span class="line"><span class="comment">//准备一个集合</span></span><br><span class="line">ArrayList&lt;Account&gt; accounts = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line"><span class="keyword">while</span>(res.next())&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">id</span> <span class="operator">=</span> res.getInt(<span class="string">&quot;id&quot;</span>);</span><br><span class="line">    <span class="type">String</span> <span class="variable">name</span> <span class="operator">=</span> res.getString(<span class="string">&quot;name&quot;</span>);</span><br><span class="line">    <span class="type">double</span> <span class="variable">money</span> <span class="operator">=</span> res.getDouble(<span class="string">&quot;money&quot;</span>);</span><br><span class="line">    <span class="comment">//构造一个Account对象</span></span><br><span class="line">    <span class="type">Account</span> <span class="variable">account</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Account</span>(id, name, money);</span><br><span class="line">    <span class="comment">//加入到集合中</span></span><br><span class="line">    accounts.add(account);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//遍历集合访问</span></span><br><span class="line"><span class="keyword">for</span>(Account a:accounts)&#123;</span><br><span class="line">    System.out.println(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Account&#123;id=<span class="number">1</span>, name=<span class="string">&#x27;jack&#x27;</span>, money=<span class="number">1000.0</span>&#125;</span><br><span class="line">Account&#123;id=<span class="number">2</span>, name=<span class="string">&#x27;marry&#x27;</span>, money=<span class="number">99999.99</span>&#125;</span><br><span class="line">Account&#123;id=<span class="number">3</span>, name=<span class="string">&#x27;mike&#x27;</span>, money=<span class="number">0.0</span>&#125;</span><br><span class="line">Account&#123;id=<span class="number">4</span>, name=<span class="string">&#x27;zhangsan&#x27;</span>, money=<span class="number">100.0</span>&#125;</span><br><span class="line">Account&#123;id=<span class="number">5</span>, name=<span class="string">&#x27;lisi&#x27;</span>, money=<span class="number">200.0</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="数据库连接池"><a href="#数据库连接池" class="headerlink" title="数据库连接池"></a>数据库连接池</h4><p>之前我们代码中使用连接是没有使用都创建一个Connection对象，使用完毕就会将其销毁。这样重复创建销毁的过程是特别耗费计算机的性能的及消耗时间的。</p>
+<p>连接池是在一开始就创建好了一些连接（Connection）对象存储起来。用户需要连接数据库时，不需要自己创建连接，而只需要从连接池中获取一个连接进行使用，使用完毕后再将连接对象归还给连接池；这样就可以起到资源重用，也节省了频繁创建连接销毁连接所花费的时间，从而提升了系统响应的速度。</p>
+<ul>
+<li>Druid（德鲁伊）<ul>
+<li>Druid连接池是阿里巴巴开源的数据库连接池项目</li>
+<li>功能强大，性能优秀，是Java语言最好的数据库连接池之一</li>
+</ul>
+</li>
+</ul>
+<p>使用方法：</p>
+<p>首先配置文件</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">driverClassName</span>=<span class="string">com.mysql.jdbc.Driver</span></span><br><span class="line"><span class="attr">url</span>=<span class="string">jdbc:mysql:///db_test?useSSL=false&amp;useServerPrepStmts=true</span></span><br><span class="line"><span class="attr">username</span>=<span class="string">root</span></span><br><span class="line"><span class="attr">password</span>=<span class="string">1234</span></span><br><span class="line"><span class="comment"># 初始化连接数量</span></span><br><span class="line"><span class="attr">initialSize</span>=<span class="string">5</span></span><br><span class="line"><span class="comment"># 最大连接数</span></span><br><span class="line"><span class="attr">maxActive</span>=<span class="string">10</span></span><br><span class="line"><span class="comment"># 最大等待时间</span></span><br><span class="line"><span class="attr">maxWait</span>=<span class="string">3000</span></span><br></pre></td></tr></table></figure>
+
+<p>使用过程</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="comment">//1.导入jar包</span></span><br><span class="line">        <span class="comment">//2.定义配置文件</span></span><br><span class="line">        <span class="comment">//3. 加载配置文件</span></span><br><span class="line">        <span class="type">Properties</span> <span class="variable">prop</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Properties</span>();</span><br><span class="line">        prop.load(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(<span class="string">&quot;jdbc-demo/src/druid.properties&quot;</span>));<span class="comment">//加载配置文件</span></span><br><span class="line">        <span class="comment">//4. 获取连接池对象</span></span><br><span class="line">        <span class="type">DataSource</span> <span class="variable">dataSource</span> <span class="operator">=</span> DruidDataSourceFactory.createDataSource(prop);<span class="comment">//传入配置获取连接池对象</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//5. 获取数据库连接 Connection</span></span><br><span class="line">        <span class="type">Connection</span> <span class="variable">connection</span> <span class="operator">=</span> dataSource.getConnection();<span class="comment">//获取一个连接</span></span><br><span class="line">        System.out.println(connection); <span class="comment">//获取到了连接后就可以继续做其他操作了</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//System.out.println(System.getProperty(&quot;user.dir&quot;));</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="JDBC练习"><a href="#JDBC练习" class="headerlink" title="JDBC练习"></a>JDBC练习</h4><p>完成商品品牌数据的增删改查操作</p>
+<ul>
+<li>查询：查询所有数据</li>
+<li>添加：添加品牌</li>
+<li>修改：根据id修改</li>
+<li>删除：根据id删除</li>
+</ul>
+<p>数据准备</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">-- 删除tb_brand表</span><br><span class="line">drop table if exists tb_brand;</span><br><span class="line">-- 创建tb_brand表</span><br><span class="line">create table tb_brand (</span><br><span class="line">    -- id 主键</span><br><span class="line">    id int primary key auto_increment,</span><br><span class="line">    -- 品牌名称</span><br><span class="line">    brand_name varchar(20),</span><br><span class="line">    -- 企业名称</span><br><span class="line">    company_name varchar(20),</span><br><span class="line">    -- 排序字段</span><br><span class="line">    ordered int,</span><br><span class="line">    -- 描述信息</span><br><span class="line">    description varchar(100),</span><br><span class="line">    -- 状态：0：禁用  1：启用</span><br><span class="line">    status int</span><br><span class="line">);</span><br><span class="line">-- 添加数据</span><br><span class="line">insert into tb_brand (brand_name, company_name, ordered, description, status)</span><br><span class="line">values (&#x27;三只松鼠&#x27;, &#x27;三只松鼠股份有限公司&#x27;, 5, &#x27;好吃不上火&#x27;, 0),</span><br><span class="line">       (&#x27;华为&#x27;, &#x27;华为技术有限公司&#x27;, 100, &#x27;华为致力于把数字世界带入每个人、每个家庭、每个组织，构建万物互联的智能世界&#x27;, 1),</span><br><span class="line">       (&#x27;小米&#x27;, &#x27;小米科技有限公司&#x27;, 50, &#x27;are you ok&#x27;, 1);</span><br></pre></td></tr></table></figure>
+
+<p>Brand类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Brand</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> Integer id;</span><br><span class="line">    <span class="keyword">private</span> String brandName;</span><br><span class="line">    <span class="keyword">private</span> String companyName;</span><br><span class="line">    <span class="keyword">private</span> Integer ordered;<span class="comment">//排序字段</span></span><br><span class="line">    <span class="keyword">private</span> Integer status;<span class="comment">//状态 1表示开启 0表示禁用</span></span><br><span class="line"><span class="comment">//alt+insert 自动生成</span></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Brand</span><span class="params">(Integer id, String brandName, String companyName, Integer ordered, Integer status)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.id = id;</span><br><span class="line">        <span class="built_in">this</span>.brandName = brandName;</span><br><span class="line">        <span class="built_in">this</span>.companyName = companyName;</span><br><span class="line">        <span class="built_in">this</span>.ordered = ordered;</span><br><span class="line">        <span class="built_in">this</span>.status = status;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> Integer <span class="title function_">getId</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> id;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setId</span><span class="params">(Integer id)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.id = id;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">getBrandName</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> brandName;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setBrandName</span><span class="params">(String brandName)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.brandName = brandName;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">getCompanyName</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> companyName;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setCompanyName</span><span class="params">(String companyName)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.companyName = companyName;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> Integer <span class="title function_">getOrdered</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> ordered;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setOrdered</span><span class="params">(Integer ordered)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.ordered = ordered;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> Integer <span class="title function_">getStatus</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> status;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setStatus</span><span class="params">(Integer status)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.status = status;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">toString</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Brand&#123;&quot;</span> +</span><br><span class="line">                <span class="string">&quot;id=&quot;</span> + id +</span><br><span class="line">                <span class="string">&quot;, brandName=&#x27;&quot;</span> + brandName + <span class="string">&#x27;\&#x27;&#x27;</span> +</span><br><span class="line">                <span class="string">&quot;, companyName=&#x27;&quot;</span> + companyName + <span class="string">&#x27;\&#x27;&#x27;</span> +</span><br><span class="line">                <span class="string">&quot;, ordered=&quot;</span> + ordered +</span><br><span class="line">                <span class="string">&quot;, status=&quot;</span> + status +</span><br><span class="line">                <span class="string">&#x27;&#125;&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>查询所有</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.alibaba.druid.pool.DruidDataSourceFactory;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.sql.DataSource;</span><br><span class="line"><span class="keyword">import</span> java.io.FileInputStream;</span><br><span class="line"><span class="keyword">import</span> java.sql.Connection;</span><br><span class="line"><span class="keyword">import</span> java.sql.PreparedStatement;</span><br><span class="line"><span class="keyword">import</span> java.sql.ResultSet;</span><br><span class="line"><span class="keyword">import</span> java.util.ArrayList;</span><br><span class="line"><span class="keyword">import</span> java.util.Properties;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DruidDemo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="keyword">final</span> <span class="type">Properties</span> <span class="variable">properties</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Properties</span>();<span class="comment">//配置文件</span></span><br><span class="line">        properties.load(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(<span class="string">&quot;jdbc/src/druid.properties&quot;</span>));<span class="comment">//加载配置文件</span></span><br><span class="line">        <span class="keyword">final</span> <span class="type">DataSource</span> <span class="variable">dataSource</span> <span class="operator">=</span> DruidDataSourceFactory.createDataSource(properties);<span class="comment">//获取连接池</span></span><br><span class="line">        <span class="keyword">final</span> <span class="type">Connection</span> <span class="variable">connection</span> <span class="operator">=</span> dataSource.getConnection();<span class="comment">//获取连接</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;select * from tb_brand&quot;</span>;</span><br><span class="line">        <span class="keyword">final</span> <span class="type">PreparedStatement</span> <span class="variable">statement</span> <span class="operator">=</span> connection.prepareStatement(sql);<span class="comment">//获取statement用来执行sql</span></span><br><span class="line">        <span class="keyword">final</span> <span class="type">ResultSet</span> <span class="variable">res</span> <span class="operator">=</span> statement.executeQuery();<span class="comment">//执行sql,返回结果集</span></span><br><span class="line">        <span class="keyword">final</span> ArrayList&lt;Brand&gt; brands = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">        <span class="keyword">while</span>(res.next())&#123;</span><br><span class="line">            <span class="keyword">final</span> <span class="type">int</span> <span class="variable">id</span> <span class="operator">=</span> res.getInt(<span class="string">&quot;id&quot;</span>);</span><br><span class="line">            <span class="keyword">final</span> <span class="type">String</span> <span class="variable">brandName</span> <span class="operator">=</span> res.getString(<span class="string">&quot;brand_name&quot;</span>);</span><br><span class="line">            <span class="keyword">final</span> <span class="type">String</span> <span class="variable">companyName</span> <span class="operator">=</span> res.getString(<span class="string">&quot;company_name&quot;</span>);</span><br><span class="line">            <span class="keyword">final</span> <span class="type">int</span> <span class="variable">status</span> <span class="operator">=</span> res.getInt(<span class="string">&quot;status&quot;</span>);</span><br><span class="line">            <span class="keyword">final</span> <span class="type">int</span> <span class="variable">ordered</span> <span class="operator">=</span> res.getInt(<span class="string">&quot;ordered&quot;</span>);</span><br><span class="line">            <span class="keyword">final</span> <span class="type">Brand</span> <span class="variable">brand</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Brand</span>(id, brandName, companyName, ordered, status);</span><br><span class="line">            brands.add(brand);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(brands);</span><br><span class="line">        <span class="comment">//释放资源</span></span><br><span class="line">        res.close();</span><br><span class="line">        statement.close();</span><br><span class="line">        connection.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>插入数据</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">addBrand</span><span class="params">(Brand brand)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;insert into tb_brand(id,brand_name,company_name,ordered,status) values(?,?,?,?,?)&quot;</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">Properties</span> <span class="variable">properties</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Properties</span>();</span><br><span class="line">    properties.load(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(<span class="string">&quot;jdbc/src/druid.properties&quot;</span>));</span><br><span class="line">    <span class="keyword">final</span> <span class="type">DataSource</span> <span class="variable">dataSource</span> <span class="operator">=</span> DruidDataSourceFactory.createDataSource(properties);</span><br><span class="line">    <span class="keyword">final</span> <span class="type">Connection</span> <span class="variable">connection</span> <span class="operator">=</span> dataSource.getConnection();</span><br><span class="line">    <span class="keyword">final</span> <span class="type">PreparedStatement</span> <span class="variable">preparedStatement</span> <span class="operator">=</span> connection.prepareStatement(sql);</span><br><span class="line">    preparedStatement.setInt(<span class="number">1</span>,brand.getId());</span><br><span class="line">    preparedStatement.setString(<span class="number">2</span>,brand.getBrandName());</span><br><span class="line">    preparedStatement.setString(<span class="number">3</span>,brand.getCompanyName());</span><br><span class="line">    preparedStatement.setInt(<span class="number">4</span>,brand.getOrdered());</span><br><span class="line">    preparedStatement.setInt(<span class="number">5</span>,brand.getStatus());</span><br><span class="line">    <span class="keyword">final</span> <span class="type">int</span> <span class="variable">count</span> <span class="operator">=</span> preparedStatement.executeUpdate();</span><br><span class="line">    System.out.println(count);</span><br><span class="line">    <span class="keyword">if</span>(count&gt;<span class="number">0</span>)&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;sucessfully insert.&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    preparedStatement.close();</span><br><span class="line">    connection.close();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Maven"><a href="#Maven" class="headerlink" title="Maven"></a>Maven</h2><p>Apache Maven== 是一个项目管理和构建==工具==，它基于项目对象模型(POM)的概念，通过一小段描述信息来管理项目的构建、报告和文档。</p>
+<ul>
+<li>项目对象模型 (Project Object Model)</li>
+<li>依赖管理模型(Dependency)</li>
+<li>插件(Plugin)</li>
+</ul>
+<p><strong>仓库分类：</strong></p>
+<ul>
+<li>本地仓库：自己计算机上的一个目录</li>
+<li>中央仓库：由Maven团队维护的全球唯一的仓库<ul>
+<li>地址： <a target="_blank" rel="noopener" href="https://repo1.maven.org/maven2/">https://repo1.maven.org/maven2/</a></li>
+</ul>
+</li>
+<li>远程仓库(私服)：一般由公司团队搭建的私有仓库</li>
+</ul>
+<h4 id="maven安装和配置"><a href="#maven安装和配置" class="headerlink" title="maven安装和配置"></a>maven安装和配置</h4><p>Maven解压之后的文件：</p>
+<ul>
+<li>bin目录 ： 存放的是可执行命令。mvn 命令重点关注。</li>
+<li>conf目录 ：存放Maven的配置文件。<code>settings.xml</code> 配置文件后期需要修改。</li>
+<li>lib目录 ：存放Maven依赖的jar包。Maven也是使用java开发的，所以它也依赖其他的jar包。</li>
+</ul>
+<p>添加环境变量：新建一个MAVEN_HOME,然后在Path中添加%MAVEN_HOME%\bin</p>
+<ul>
+<li>配置本地仓库</li>
+</ul>
+<p>修改 conf/settings.xml 中的 为一个指定目录作为本地仓库，用来存储jar包。</p>
+<p>例如</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">localRepository</span>&gt;</span>D:\Software\apache-maven-3.8.4\local_repo<span class="tag">&lt;/<span class="name">localRepository</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>配置阿里云私服</p>
+<p>中央仓库在国外，所以下载jar包速度可能比较慢，而阿里公司提供了一个远程仓库，里面基本也都有开源项目的jar包。</p>
+</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">mirror</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;<span class="name">id</span>&gt;</span>alimaven<span class="tag">&lt;/<span class="name">id</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;<span class="name">name</span>&gt;</span>aliyun maven<span class="tag">&lt;/<span class="name">name</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;<span class="name">url</span>&gt;</span>http://maven.aliyun.com/nexus/content/groups/public/<span class="tag">&lt;/<span class="name">url</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">mirrorOf</span>&gt;</span>central<span class="tag">&lt;/<span class="name">mirrorOf</span>&gt;</span>          </span><br><span class="line"><span class="tag">&lt;/<span class="name">mirror</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="maven命令"><a href="#maven命令" class="headerlink" title="maven命令"></a>maven命令</h4><ul>
+<li>compile ：编译：下载编译需要的jar包，在项目下生成一个target目录</li>
+<li>clean：清理：清除target目录</li>
+<li>test：测试：执行所有的测试代码</li>
+<li>package：打包：在项目的target目录下有一个jar包（将当前项目打成的jar包）</li>
+<li>install：安装：将当前项目打成jar包并安装到本地仓库。</li>
+</ul>
+<p>声明周期：</p>
+<ul>
+<li>clean:清理工作</li>
+<li>default：核心工作，例如编译，测试，打包，安装等</li>
+<li>site：产生报告，发布站点等，一般不会使用</li>
+</ul>
+<p>同一套生命周期内，执行后面的命令，前面的命令会自动执行。</p>
+<p>例如default：编译，测试，打包和安装是一个声明周期</p>
+<p>如果只是编译：那么编译源文件为class文件并在项目下生成一个target目录，放在其中。</p>
+<p>打包：将项目打包成jar包</p>
+<p>安装：将项目安装到本地仓库中</p>
+<p>IDEA中可以使用maven helper插件，在settings - plugins中搜索maven helper并安装</p>
+<p>然后右键项目，可以执行maven命令。</p>
+<p>scope：</p>
+<ul>
+<li>compile ：作用于编译环境、测试环境、运行环境。（不指定则默认为compile）</li>
+<li>test ： 作用于测试环境。典型的就是Junit坐标，以后使用Junit时，都会将scope指定为该值</li>
+<li>provided ：作用于编译环境、测试环境。我们后面会学习 <code>servlet-api</code> ，在使用它时，必须将 <code>scope</code> 设置为该值，不然运行时就会报错（运行的时候不需要）</li>
+<li>runtime ： 作用于测试环境、运行环境。jdbc驱动一般将 <code>scope</code> 设置为该值，当然不设置也没有任何问题</li>
+</ul>
+<h2 id="MyBatis"><a href="#MyBatis" class="headerlink" title="MyBatis"></a>MyBatis</h2><ul>
+<li>MyBatis 是一款优秀的==持久层框架==，用于简化 JDBC 开发</li>
+<li>MyBatis 本是 Apache 的一个开源项目iBatis, 2010年这个项目由apache software foundation 迁移到了google code，并且改名为MyBatis 。2013年11月迁移到Github</li>
+<li>官网：<a target="_blank" rel="noopener" href="https://mybatis.org/mybatis-3/zh/index.html">https://mybatis.org/mybatis-3/zh/index.html</a></li>
+</ul>
+<p>Mybatis就是对jdbc代码进行了封装。</p>
+<p>首先新建maven项目，在pom.xml中添加依赖，根据坐标</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>mysql<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mysql-connector-java<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.1.46<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.mybatis<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mybatis<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.5.10<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>有两种方式来执行sql语句，一种是获取SqlSession对象，用它来执行sql，另一种是使用mapper代理的方式，代码更简洁，推荐第二种。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MyBatisDemo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">resource</span> <span class="operator">=</span> <span class="string">&quot;mybatis-config.xml&quot;</span>;</span><br><span class="line">        <span class="type">InputStream</span> <span class="variable">inputStream</span> <span class="operator">=</span> Resources.getResourceAsStream(resource);</span><br><span class="line">        <span class="type">SqlSessionFactory</span> <span class="variable">sqlSessionFactory</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SqlSessionFactoryBuilder</span>().build(inputStream);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//2. 获取SqlSession对象，用它来执行sql</span></span><br><span class="line">        <span class="type">SqlSession</span> <span class="variable">sqlSession</span> <span class="operator">=</span> sqlSessionFactory.openSession();</span><br><span class="line"><span class="comment">//        //3. 执行sql</span></span><br><span class="line"><span class="comment">//        List&lt;Brand&gt; brands = sqlSession.selectList(&quot;org.mybatis.mapper.BrandMapper.selectAll&quot;); //参数是一个字符串，该字符串必须是映射配置文件的namespace.id</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//2.maper代理方式</span></span><br><span class="line">        <span class="type">BrandMapper</span> <span class="variable">brandMapper</span> <span class="operator">=</span> sqlSession.getMapper(BrandMapper.class);</span><br><span class="line">        List&lt;Brand&gt; brands = brandMapper.selectAll();</span><br><span class="line"></span><br><span class="line">        System.out.println(brands);</span><br><span class="line">        <span class="comment">//4. 释放资源</span></span><br><span class="line">        sqlSession.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这三句是固定不动的</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"> <span class="type">String</span> <span class="variable">resource</span> <span class="operator">=</span> <span class="string">&quot;mybatis-config.xml&quot;</span>;</span><br><span class="line"><span class="type">InputStream</span> <span class="variable">inputStream</span> <span class="operator">=</span> Resources.getResourceAsStream(resource);</span><br><span class="line"><span class="type">SqlSessionFactory</span> <span class="variable">sqlSessionFactory</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SqlSessionFactoryBuilder</span>().build(inputStream);</span><br><span class="line"><span class="comment">//得到sqlSessionFactory</span></span><br></pre></td></tr></table></figure>
+
+<p>mybatis-config.xml是mybatis的核心配置文件，放在resource目录下。</p>
+<p>然后获取sqlSession对象，用它来执行sql语句</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SqlSession</span> <span class="variable">sqlSession</span> <span class="operator">=</span> sqlSessionFactory.openSession();</span><br></pre></td></tr></table></figure>
+
+<p>执行方法一：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Brand&gt; brands = sqlSession.selectList(<span class="string">&quot;org.mybatis.mapper.BrandMapper.selectAll&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>参数是一个字符串，该字符串必须是映射配置文件的namespace.id。 此时的namespace可以随便起名，因为这里是准确传入namespace的，java能够找到。</p>
+<p>执行方法二：mapper代理的方式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">BrandMapper</span> <span class="variable">brandMapper</span> <span class="operator">=</span> sqlSession.getMapper(BrandMapper.class);<span class="comment">//把mapper类传入</span></span><br><span class="line">List&lt;Brand&gt; brands = brandMapper.selectAll();<span class="comment">//然后就可以直接调用方法</span></span><br></pre></td></tr></table></figure>
+
+<p>这种方式要求比较高：需要</p>
+<ul>
+<li><p><strong>定义与SQL映射文件同名的Mapper接口</strong>，<strong>并且将Mapper接口和SQL映射文件放置在同一目录下</strong></p>
+</li>
+<li><p><strong>设置SQL映射文件的namespace属性为Mapper接口全限定名</strong></p>
+</li>
+<li><p><strong>在 Mapper 接口中定义方法，方法名就是SQL映射文件中sql语句的id，并保持参数类型和返回值类型一致</strong></p>
+</li>
+</ul>
+<p><img src="/sumilk-z/sumilk-z.github.io/2022/08/19/6.web%E5%BC%80%E5%8F%91.assets/Document\研究生\Java学习\Java基础\6.web开发.assets\image-20220719210454765.png" alt="image-20220719210454765"></p>
+<p>如上图所示</p>
+<p><code>BrandMapper</code>接口所在的目录是<code>org.mybatis.mapper</code></p>
+<p><code>BrandMapper.xml</code>所在的目录是<code>org/mybatis/mapper</code></p>
+<p>它们是在相同的目录下的。</p>
+<p><code>BrandMapper.xml</code>的内容如下</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;UTF-8&quot;</span> ?&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">mapper</span></span></span><br><span class="line"><span class="meta">        <span class="keyword">PUBLIC</span> <span class="string">&quot;-//mybatis.org//DTD Mapper 3.0//EN&quot;</span></span></span><br><span class="line"><span class="meta">        <span class="string">&quot;http://mybatis.org/dtd/mybatis-3-mapper.dtd&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">mapper</span> <span class="attr">namespace</span>=<span class="string">&quot;org.mybatis.mapper.BrandMapper&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectAll&quot;</span> <span class="attr">resultType</span>=<span class="string">&quot;Brand&quot;</span>&gt;</span></span><br><span class="line">        select * from tb_brand</span><br><span class="line">    <span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">mapper</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>BrandMapper</code>接口的内容如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">BrandMapper</span> &#123;</span><br><span class="line">    List&lt;Brand&gt; <span class="title function_">selectAll</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意到：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">mapper</span> <span class="attr">namespace</span>=<span class="string">&quot;org.mybatis.mapper.BrandMapper&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectAll&quot;</span> <span class="attr">resultType</span>=<span class="string">&quot;Brand&quot;</span>&gt;</span></span><br><span class="line">        select * from tb_brand</span><br><span class="line">    <span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">mapper</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>namespace</code>必须是<code>Mapper</code>接口的全限定名，<code>id</code>就是执行方法，<code>resultType</code>可以写成<code>Brand</code>，<code>brand</code>等而不是全名是因为在<code>mybatis-config.xml</code>核心配置文件中进行了设置：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">typeAliases</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">package</span> <span class="attr">name</span>=<span class="string">&quot;org.mybatis.pojo&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">typeAliases</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>而这个包下放的是Brand类。因此这个包下的类都可以使用别名。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.mybatis.pojo;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Brand</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> Integer id;</span><br><span class="line">    <span class="keyword">private</span> String brandName;</span><br><span class="line">    <span class="keyword">private</span> String companyName;</span><br><span class="line">    <span class="keyword">private</span> Integer ordered;</span><br><span class="line">    <span class="keyword">private</span> String description;</span><br><span class="line">    <span class="keyword">private</span> Integer status;</span><br><span class="line">    ...省略</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>pojo: plain old java object</p>
+</blockquote>
+<p><img src="/sumilk-z/sumilk-z.github.io/2022/08/19/6.web%E5%BC%80%E5%8F%91.assets/Document\研究生\Java学习\Java基础\6.web开发.assets\image-20220719211135635.png" alt="image-20220719211135635"></p>
+<p>可以看到，在target目录下，BrandMapper接口和BrandMapper.xml文件在同一个目录下。</p>
+<blockquote>
+<p>BrandMapper.xml: SQL映射文件</p>
+<p>BrandMapper.java mapper接口，注意是interface</p>
+</blockquote>
+<p>最后，如果Mapper接口名称和SQL映射文件名称相同，并在同一目录下，则<strong>可以使用包扫描的方式简化SQL映射文件的加载</strong>。也就是将核心配置文件的加载映射配置文件的配置修改为：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">    <span class="tag">&lt;<span class="name">mappers</span>&gt;</span></span><br><span class="line"><span class="comment">&lt;!--        &lt;mapper resource=&quot;org/mybatis/mapper/BrandMapper.xml&quot;/&gt;--&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">package</span> <span class="attr">name</span>=<span class="string">&quot;org/mybatis/mapper&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">mappers</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="mybatis传参数"><a href="#mybatis传参数" class="headerlink" title="mybatis传参数"></a>mybatis传参数</h4><h5 id="没有参数的情况"><a href="#没有参数的情况" class="headerlink" title="没有参数的情况"></a>没有参数的情况</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Brand&gt; <span class="title function_">selectAll</span><span class="params">()</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectAll&quot;</span> <span class="attr">resultType</span>=<span class="string">&quot;Brand&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="只有一个参数的情况"><a href="#只有一个参数的情况" class="headerlink" title="只有一个参数的情况"></a>只有一个参数的情况</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Brand <span class="title function_">selectById</span><span class="params">(<span class="type">int</span> id)</span>; <span class="comment">//接口中的定义</span></span><br></pre></td></tr></table></figure>
+
+<p>映射文件中的定义</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectById&quot;</span> <span class="attr">resultType</span>=<span class="string">&quot;Brand&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;id&#125;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>使用：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">BrandMapper</span> <span class="variable">brandMapper</span> <span class="operator">=</span> sqlSession.getMapper(BrandMapper.class);</span><br><span class="line"><span class="type">Brand</span> <span class="variable">brand</span> <span class="operator">=</span> brandMapper.selectById(<span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<h5 id="多个参数的情况"><a href="#多个参数的情况" class="headerlink" title="多个参数的情况"></a>多个参数的情况</h5><p><strong>方法一</strong>：通过构造一个POJO对象传入多个参数</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Brand <span class="title function_">selectByIdAndBrandNameByObject</span><span class="params">(Brand brand)</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--     用Brand对象最为参数来传递多参数，要求&#123;&#125;的名字和Brand对象的属性名相同--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByIdAndBrandNameByObject&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;id&#125; and brand_name = #&#123;brandName&#125;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">BrandMapper</span> <span class="variable">brandMapper</span> <span class="operator">=</span> sqlSession.getMapper(BrandMapper.class);</span><br><span class="line"><span class="type">Brand</span> <span class="variable">b</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Brand</span>();</span><br><span class="line">b.setId(<span class="number">10</span>);</span><br><span class="line">b.setBrandName(<span class="string">&quot;中国好人&quot;</span>);</span><br><span class="line"><span class="type">Brand</span> <span class="variable">brand</span> <span class="operator">=</span> brandMapper.selectByIdAndBrandNameByObject(b);</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>方法二</strong>：通过注解传参数</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Brand <span class="title function_">selectByIdAndBrandNameByAnnotation</span><span class="params">(<span class="meta">@Param(&quot;ID&quot;)</span> <span class="type">int</span> ID, <span class="meta">@Param(&quot;bName&quot;)</span> String bName)</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--    通过注解的方式来传递多参数，要求&#123;&#125;的名字就是注解内的名字paramName  @Param(paramName)--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByIdAndBrandNameByAnnotation&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;ID&#125; and brand_name = #&#123;bName&#125;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Brand</span> <span class="variable">brand</span> <span class="operator">=</span> brandMapper.selectByIdAndBrandNameByAnnotation(<span class="number">10</span>,<span class="string">&quot;中国好人&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>方法三</strong>：通过传入一个map传参数</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Brand <span class="title function_">selectByIdAndBrandNameByMap</span><span class="params">(Map map)</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--    通过传入一个map的方式来传递多参数，要求&#123;&#125;的名字是map的key--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByIdAndBrandNameByMap&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;key_id&#125; and brand_name = #&#123;key_brandName&#125;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Map</span> <span class="variable">map</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;String,String&gt;();</span><br><span class="line">map.put(<span class="string">&quot;key_id&quot;</span>,<span class="number">10</span>);</span><br><span class="line">map.put(<span class="string">&quot;key_brandName&quot;</span>,<span class="string">&quot;中国好人&quot;</span>);</span><br><span class="line"><span class="type">Brand</span> <span class="variable">brand</span> <span class="operator">=</span> brandMapper.selectByIdAndBrandNameByMap(map);</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>以上三种方式，最不推荐第三种，如果参数较少（两三个）那么用注解比较方便；如果参数多达四五个，那么构造一个POJO对象比较方便。</p>
+</blockquote>
+<h4 id="mybatis传递参数的原理"><a href="#mybatis传递参数的原理" class="headerlink" title="mybatis传递参数的原理"></a>mybatis传递参数的原理</h4><p>mybatis传递参数，可以传递单个参数或者多个参数，而单个参数可以是：</p>
+<ul>
+<li>POJO对象，例如传入一个Brand b;</li>
+<li>Map集合类型</li>
+<li>Collection集合类型（Map和Collection是两个派系）</li>
+<li>List集合类型</li>
+<li>Array类型</li>
+<li>其他类型（例如int String 之类的）</li>
+</ul>
+<p><strong>而对于多个参数传递，mybatis底层对于多个参数的处理是将这些参数封装成Map集合对象，值就是参数值</strong>。而键在没有使用<code>@Param</code>注解的时候命名为arg0,arg1…或者是 param1,param2…以此类推。</p>
+<p>我们作以下实验：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Brand <span class="title function_">selectByIdAndStatus</span><span class="params">(<span class="type">int</span> id, <span class="type">int</span> status)</span>; <span class="comment">//接口定义，没有使用注解，也没有使用map传入多个参数</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByIdAndStatus&quot;</span>  <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;arg0&#125; and status = #&#123;arg1&#125;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>这里的参数使用arg0, arg1表示两个参数，能够返回正确的结果：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Preparing: select * from tb_brand <span class="type">where</span> <span class="variable">id</span> <span class="operator">=</span> ? <span class="type">and</span> <span class="variable">status</span> <span class="operator">=</span> ?; <span class="comment">//arg0 arg1被替换成了占位符</span></span><br><span class="line">Parameters: <span class="number">1</span>(Integer), <span class="number">1</span>(Integer)</span><br><span class="line">Brand&#123;id=<span class="number">1</span>, brandName=<span class="string">&#x27;三只松鼠&#x27;</span>, companyName=<span class="string">&#x27;三只松鼠股份有限公司&#x27;</span>, ordered=<span class="number">5</span>, description=<span class="string">&#x27;好吃不上火&#x27;</span>, status=<span class="number">1</span>&#125; <span class="comment">//查询结果封装成的Brand对象</span></span><br></pre></td></tr></table></figure>
+
+<p>我们进行更改同样能够得到上述的结果：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByIdAndStatus&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;param1&#125; and status = #&#123;param2&#125;; //参数替换为param1,param2...以此类推</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>实际上就算替换成param1,arg1这样的组合也是可以的。即arg0和param1对应的是同一个参数。以此类推。</p>
+<blockquote>
+<p>在接口方法参数上使用@Param注解，mybatis会将arg开头的键名替换为对应注解的属性值。</p>
+</blockquote>
+<p>注意：只是arg参数进行了替换，param参数没有替换！</p>
+<p>进行如下更改</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Brand <span class="title function_">selectByIdAndStatus</span><span class="params">(<span class="meta">@Param(&quot;id&quot;)</span> <span class="type">int</span> id, <span class="meta">@Param(&quot;status&quot;)</span> <span class="type">int</span> status)</span>; <span class="comment">//接口参数使用注解</span></span><br></pre></td></tr></table></figure>
+
+<p>发现param参数还能继续使用不报错，而如果替换成arg0,arg1就会报错，因为在map中这两个key已经被替换成了id和status.</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByIdAndStatus&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;param1&#125; and status = #&#123;param2&#125;; //参数替换为param1,param2...以此类推</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="查询结果名称处理"><a href="#查询结果名称处理" class="headerlink" title="查询结果名称处理"></a>查询结果名称处理</h4><p>由于数据库中的名称和POJO对象的属性名不同：例如数据库中为company_name,POJO对象为companyName</p>
+<p>这样导致查询结果无法对应，那么mybatis就不能自动封装为POJO对象。</p>
+<p><strong>方法一：</strong>查询的时候使用别名，即在sql语句中使用as</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> company_name <span class="keyword">as</span> companyName, ...</span><br></pre></td></tr></table></figure>
+
+<p>这样写比较麻烦</p>
+<p><strong>方法二</strong>：在映射文件中使用sql片段</p>
+<p>也就是把sql语句中 替换的这部分提取出来，以后的查询语句可以复用。这样不方便，因为不是所有字段都用得上。</p>
+<p><strong>方法三：</strong>使用resultMap</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">resultMap</span> <span class="attr">id</span>=<span class="string">&quot;brandResult&quot;</span> <span class="attr">type</span>=<span class="string">&quot;brand&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">&quot;brand_name&quot;</span> <span class="attr">property</span>=<span class="string">&quot;brandName&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">result</span> <span class="attr">column</span>=<span class="string">&quot;company_name&quot;</span> <span class="attr">property</span>=<span class="string">&quot;companyName&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">resultMap</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>column是数据库中的列标签，property是给定的属性，即别名。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectById&quot;</span> <span class="attr">resultType</span>=<span class="string">&quot;Brand&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;id&#125;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>将resultType替换成resultMap即可</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectById&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand where id = #&#123;id&#125;;</span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>最后，如果是使用resultType的话，需要写全名，即POJO类所在包名+类名</p>
+<p>例如 <code>resultType = org.mybatis.pojo.Brand</code></p>
+<p>但是如果在核心配置文件中加上这个片段</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">typeAliases</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">package</span> <span class="attr">name</span>=<span class="string">&quot;org.mybatis.pojo&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">typeAliases</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>则表明这个包下的类名都可以使用别名，且不区分大小写。<code>resultType = Brand</code>或者<code>resultType = brand</code>都是可以的。</p>
+<blockquote>
+<p>resultType适用于查询结果中没有名称不一致的问题的情况。</p>
+</blockquote>
+<p>另外在核心配置文件中需要<strong>导入映射文件</strong></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">mappers</span>&gt;</span></span><br><span class="line"><span class="comment">&lt;!--        &lt;mapper resource=&quot;org/mybatis/mapper/BrandMapper.xml&quot;/&gt;--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">package</span> <span class="attr">name</span>=<span class="string">&quot;org/mybatis/mapper&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">mappers</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>使用<code>&lt;package name=&quot;org/mybatis/mapper&quot;/&gt;</code>可以一次将这个目录下的所有映射文件导入。</p>
+<blockquote>
+<p>最后mybatis的核心配置文件是有顺序的，例如typeAliases就必须在environments的前面，否则无法生效。</p>
+</blockquote>
+<h4 id="动态SQL语句"><a href="#动态SQL语句" class="headerlink" title="动态SQL语句"></a>动态SQL语句</h4><h5 id="if-和-where标签"><a href="#if-和-where标签" class="headerlink" title="if 和 where标签"></a>if 和 where标签</h5><p>多条件组合。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByCondition&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand</span><br><span class="line">    <span class="tag">&lt;<span class="name">where</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;status != null&quot;</span>&gt;</span></span><br><span class="line">            and status = #&#123;status&#125;</span><br><span class="line">        <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;companyName!=null and companyName != &#x27;&#x27; &quot;</span>&gt;</span></span><br><span class="line">            and company_name like #&#123;companyName&#125;</span><br><span class="line">        <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;brandName!=null and brandName != &#x27;&#x27; &quot;</span>&gt;</span></span><br><span class="line">            and brand_name like #&#123;brandName&#125;</span><br><span class="line">        <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">where</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>不用再写where</strong>，<where>标签会自动加上</where></li>
+<li><strong>每一句都要写and</strong>，mybatis会自动把第一个and 去掉。</li>
+</ul>
+<p>mapper接口如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Brand&gt; <span class="title function_">selectByCondition</span><span class="params">(Brand brand)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>使用过程如下：此时传入的参数为一个POJO对象是最好的</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Brand</span> <span class="variable">b</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Brand</span>();</span><br><span class="line">b.setStatus(<span class="number">1</span>);</span><br><span class="line">List&lt;Brand&gt; brands = brandMapper.selectByCondition(b);</span><br></pre></td></tr></table></figure>
+
+<p>打印mybatis执行日志可以看到实际执行sql语句为：(使用了预编译，即？作为占位符然后传入参数的方法，而不是拼接字符串的方法)</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> Preparing: <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> tb_brand <span class="keyword">WHERE</span> status <span class="operator">=</span> ?</span><br><span class="line">Parameters: <span class="number">1</span>(<span class="type">Integer</span>)</span><br></pre></td></tr></table></figure>
+
+<p>如果更改为</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Brand</span> <span class="variable">b</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Brand</span>();</span><br><span class="line">b.setBrandName(<span class="string">&quot;三只松鼠&quot;</span>);</span><br><span class="line">List&lt;Brand&gt; brands = brandMapper.selectByCondition(b);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Preparing: <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> tb_brand <span class="keyword">WHERE</span> brand_name <span class="keyword">like</span> ?</span><br><span class="line">Parameters: 三只松鼠(String)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可见where和if的组合能够动态选择条件。</p>
+</blockquote>
+<h5 id="choose和when标签"><a href="#choose和when标签" class="headerlink" title="choose和when标签"></a>choose和when标签</h5><p>单个条件选择</p>
+<ul>
+<li>不用写where,<where>标签会自动加上</where></li>
+<li>不用写and，因为这是单个条件选择，只能多选一，而不是条件的组合。</li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;selectByConditionSingle&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;brandResult&quot;</span>&gt;</span></span><br><span class="line">    select * from tb_brand</span><br><span class="line">    <span class="tag">&lt;<span class="name">where</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">choose</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">when</span> <span class="attr">test</span>=<span class="string">&quot;status!=null&quot;</span>&gt;</span></span><br><span class="line">                status = #&#123;status&#125;</span><br><span class="line">            <span class="tag">&lt;/<span class="name">when</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">when</span> <span class="attr">test</span>=<span class="string">&quot;companyName != null and companyName != &#x27;&#x27; &quot;</span>&gt;</span></span><br><span class="line">                company_name like #&#123;companyName&#125;</span><br><span class="line">            <span class="tag">&lt;/<span class="name">when</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">when</span> <span class="attr">test</span>=<span class="string">&quot;brandName != null and brandName != &#x27;&#x27; &quot;</span>&gt;</span></span><br><span class="line">                brand_name like #&#123;brandName&#125;</span><br><span class="line">            <span class="tag">&lt;/<span class="name">when</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">choose</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">where</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Brand <span class="title function_">selectByConditionSingle</span><span class="params">(Brand brand)</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">BrandMapper</span> <span class="variable">brandMapper</span> <span class="operator">=</span> sqlSession.getMapper(BrandMapper.class);</span><br><span class="line"><span class="type">Brand</span> <span class="variable">b</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Brand</span>();</span><br><span class="line">b.setBrandName(<span class="string">&quot;三只松鼠&quot;</span>);</span><br><span class="line"><span class="type">Brand</span> <span class="variable">brand</span> <span class="operator">=</span> brandMapper.selectByConditionSingle(b);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Preparing: <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> tb_brand <span class="keyword">WHERE</span> brand_name <span class="keyword">like</span> ?</span><br><span class="line">Parameters: 三只松鼠(String)</span><br></pre></td></tr></table></figure>
+
+<h5 id="主键返回"><a href="#主键返回" class="headerlink" title="主键返回"></a>主键返回</h5><p>多用于插入一条记录之后，返回主键。这里主键是自动增长的。（此处存疑，我理解的主键返回是：主键自增，插入数据之后返回主键的值，但是经过实验，好像都是插入成功返回1）</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">insert</span> <span class="attr">id</span>=<span class="string">&quot;add&quot;</span> <span class="attr">useGeneratedKeys</span>=<span class="string">&quot;true&quot;</span> <span class="attr">keyColumn</span>=<span class="string">&quot;id&quot;</span>&gt;</span></span><br><span class="line">    insert into tb_brand(brand_name, company_name, ordered, description, status) VALUES</span><br><span class="line">    (#&#123;brandName&#125;,#&#123;companyName&#125;,#&#123;ordered&#125;,#&#123;description&#125;,#&#123;status&#125; );</span><br><span class="line"><span class="tag">&lt;/<span class="name">insert</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Brand</span> <span class="variable">b</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Brand</span>();</span><br><span class="line">b.setBrandName(<span class="string">&quot;中国好人aaa&quot;</span>);</span><br><span class="line">b.setCompanyName(<span class="string">&quot;中国好人有限公司&quot;</span>);</span><br><span class="line">b.setStatus(<span class="number">1</span>);</span><br><span class="line">b.setOrdered(<span class="number">99</span>);</span><br><span class="line">b.setDescription(<span class="string">&quot;中国好人，做中国好产品！&quot;</span>);</span><br><span class="line">brandMapper.add(b);</span><br><span class="line">sqlSession.commit();</span><br></pre></td></tr></table></figure>
+
+<p>==尤其注意：需要手动提交事务，否则数据没有真正插入到数据库中==</p>
+<blockquote>
+<p> 另外：id自增不一定是连续的。用户如果设置了已经存在的主键也不会影响插入，mysql会自动赋值一个主键。</p>
+</blockquote>
+<p>或者可以设置自动提交事务</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SqlSession</span> <span class="variable">sqlSession</span> <span class="operator">=</span> sqlSessionFactory.openSession(<span class="literal">true</span>); </span><br><span class="line"><span class="comment">//设置自动提交事务，这种情况不需要手动提交事务了</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="update和set"><a href="#update和set" class="headerlink" title="update和set"></a>update和set</h5><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">update</span> <span class="attr">id</span>=<span class="string">&quot;update&quot;</span>&gt;</span></span><br><span class="line">       update tb_brand</span><br><span class="line">       <span class="tag">&lt;<span class="name">set</span>&gt;</span></span><br><span class="line">           <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;status != null&quot;</span>&gt;</span></span><br><span class="line">                status = #&#123;status&#125;,</span><br><span class="line">           <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">           <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;companyName!=null and companyName != &#x27;&#x27; &quot;</span>&gt;</span></span><br><span class="line">                company_name =  #&#123;companyName&#125;,</span><br><span class="line">           <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">           <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;brandName!=null and brandName != &#x27;&#x27; &quot;</span>&gt;</span></span><br><span class="line">                brand_name = #&#123;brandName&#125;,</span><br><span class="line">           <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">           <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;description != null and description != &#x27;&#x27; &quot;</span>&gt;</span></span><br><span class="line">               description = #&#123;description&#125;,</span><br><span class="line">           <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">           <span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;ordered != null&quot;</span>&gt;</span></span><br><span class="line">               ordered = #&#123;ordered&#125;</span><br><span class="line">           <span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;/<span class="name">set</span>&gt;</span></span><br><span class="line">       where id = #&#123;id&#125;;</span><br><span class="line">   <span class="tag">&lt;/<span class="name">update</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>不用写set,<set>标签会自动加上</set></li>
+<li>除了最后一个if之外，其余的都要加上逗号<code>,</code> 因为set语句就是分开设置的，而不是用and连接的。</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">update</span> `tb_brand` <span class="keyword">set</span> brand_name<span class="operator">=</span>&quot;新产品&quot;,ordered<span class="operator">=</span><span class="number">-1</span> <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">24</span>;</span><br></pre></td></tr></table></figure>
+
+<h5 id="批量删除-delete-foreach"><a href="#批量删除-delete-foreach" class="headerlink" title="批量删除 delete foreach"></a>批量删除 delete foreach</h5><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">delete</span> <span class="attr">id</span>=<span class="string">&quot;deleteById&quot;</span>&gt;</span></span><br><span class="line">    delete from tb_brand where id in</span><br><span class="line">    <span class="tag">&lt;<span class="name">foreach</span> <span class="attr">collection</span>=<span class="string">&quot;array&quot;</span> <span class="attr">item</span>=<span class="string">&quot;id&quot;</span> <span class="attr">separator</span>=<span class="string">&quot;,&quot;</span> <span class="attr">open</span>=<span class="string">&quot;(&quot;</span> <span class="attr">close</span>=<span class="string">&quot;)&quot;</span>&gt;</span></span><br><span class="line">        #&#123;id&#125;</span><br><span class="line">    <span class="tag">&lt;/<span class="name">foreach</span>&gt;</span></span><br><span class="line">    ;</span><br><span class="line"><span class="tag">&lt;/<span class="name">delete</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>array是参数默认的名字，如果使用注解传参，则会更改参数名字，此处也要做对应的修改</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> <span class="title function_">deleteById</span><span class="params">(<span class="type">int</span>[] ids)</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] ids = &#123;<span class="number">23</span>,<span class="number">24</span>,<span class="number">25</span>&#125;;</span><br><span class="line">brandMapper.deleteById(ids);</span><br><span class="line">sqlSession.commit();<span class="comment">//如果没有设置自动提交事务，涉及到对数据库的修改需要手动提交事务。</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Preparing: delete from tb_brand where id <span class="title function_">in</span> <span class="params">( ? , ? , ? )</span> ;</span><br><span class="line">Parameters: <span class="number">23</span>(Integer), <span class="number">24</span>(Integer), <span class="number">25</span>(Integer)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>设置自动提交事务： SqlSession sqlSession = sqlSessionFactory.openSession(true); </p>
+</blockquote>
+<h4 id="注解实现CURD"><a href="#注解实现CURD" class="headerlink" title="注解实现CURD"></a>注解实现CURD</h4><p>使用注解开发会比配置文件开发更加方便，但是仅仅适用于sql语句比较简单的情况，例如</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Select(value=&quot;select * from tb_brand where id = #&#123;id&#125;&quot;)</span></span><br><span class="line">Brand <span class="title function_">select</span><span class="params">(<span class="type">int</span> id)</span>;<span class="comment">//mapper接口</span></span><br></pre></td></tr></table></figure>
+
+<p>此外还有</p>
+<ul>
+<li>@Insert</li>
+<li>@Update</li>
+<li>@Delete</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Select(&quot;select * from tb_brand where id = #&#123;id&#125;&quot;)</span></span><br><span class="line">List&lt;Brand&gt; <span class="title function_">selectByIdByAnnotation</span><span class="params">(<span class="type">int</span> id)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>使用注解就实现了sql查询，这样就不用在映射文件中写sql语句了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> List&lt;Brand&gt; brands = brandMapper.selectByIdByAnnotation(<span class="number">1</span>);</span><br><span class="line">System.out.println(brands);</span><br></pre></td></tr></table></figure>
+
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zhu</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2022/08/19/6.web%E5%BC%80%E5%8F%91.assets/">https://github.com/sumilk-z/sumilk-z.github.io/2022/08/19/6.web%E5%BC%80%E5%8F%91.assets/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>LIGHT</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/Java/"># Java</a>
+                    
+                        <a href="/tags/%E5%90%8E%E7%AB%AF/"># 后端</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2022/08/19/7.cookie%E5%92%8Csession.assets/">Java使用Cookie、Session和Filter</a>
+            
+            
+            <a class="next" rel="next" href="/2022/08/19/5.%E6%AD%A3%E5%88%99%E3%80%81%E5%A4%9A%E7%BA%BF%E7%A8%8B%E3%80%81%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/">Java正则表达式、多线程和网络编程</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zhu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>
