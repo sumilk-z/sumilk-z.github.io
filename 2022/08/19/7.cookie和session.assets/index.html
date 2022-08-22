@@ -245,7 +245,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@WebServlet(urlPatterns = &quot;/ServletCookieTest&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ServletCookieTest</span> <span class="keyword">extends</span> <span class="title class_">HttpServlet</span> &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">doGet</span><span class="params">(HttpServletRequest request, HttpServletResponse response)</span> <span class="keyword">throws</span> ServletException, IOException &#123;</span><br><span class="line">        <span class="type">Cookie</span> <span class="variable">cookie</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Cookie</span>(<span class="string">&quot;username&quot;</span>,<span class="string">&quot;jack&quot;</span>);</span><br><span class="line">        response.addCookie(cookie);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">doPost</span><span class="params">(HttpServletRequest request, HttpServletResponse response)</span> <span class="keyword">throws</span> ServletException, IOException &#123;</span><br><span class="line">        <span class="built_in">this</span>.doGet(request, response);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>然后启动tomcat服务，访问<code>http://localhost:80/ServletCookieTest</code>，在浏览器的设置-查看cookie中可以看到localhost的cookie信息。</p>
-<p><img src="/sumilk-z/sumilk-z.github.io/2022/08/19/7.cookie%E5%92%8Csession.assets/Document\研究生\Java学习\Java基础\7.cookie和session.assets\image-20220721204057299.png" alt="image-20220721204057299"></p>
+<p><img src="/assets/image-20220721204057299.png" alt="image-20220721204057299"></p>
 <blockquote>
 <p>cookie的存活时间默认是：浏览会话结束时</p>
 </blockquote>
@@ -399,7 +399,7 @@
 
 <p>说明：过滤器是不需要自己去调用的，而是设置好访问资源的时候自动执行的，而且执行顺序为<strong>放行前-放行访问资源-放行后</strong>。</p>
 <h4 id="过滤器链"><a href="#过滤器链" class="headerlink" title="过滤器链"></a>过滤器链</h4><p>Filter的执行流程为：执行放行前的逻辑-》放行-》访问资源-》执行放行后的逻辑</p>
-<p><img src="/sumilk-z/sumilk-z.github.io/2022/08/19/7.cookie%E5%92%8Csession.assets/Document\研究生\Java学习\Java基础\7.cookie和session.assets\image-20220722201255778.png" alt="image-20220722201255778"></p>
+<p><img src="/assets/image-20220722201255778.png" alt="image-20220722201255778"></p>
 <p>上图中的过滤器链执行是按照以下流程执行：</p>
 <ol>
 <li>执行 <code>Filter1</code> 的放行前逻辑代码</li>
