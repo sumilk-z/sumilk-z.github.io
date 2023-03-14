@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zhu">
+
+
+
+    <meta name="description" content="这是一个个人博客">
+
+
+
+<title>Redis持久化、过期删除、内存淘汰、缓存相关 | zcblog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const currentTheme = window.localStorage && window.localStorage.getItem('theme') || '';
+            const isDark = currentTheme === 'dark';
+            const pagebody = document.getElementsByTagName('body')[0]
+            if (isDark) {
+                pagebody.classList.add('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Dark"
+            } else {
+                pagebody.classList.remove('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Light"
+            }
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Zhu&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Zhu&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Redis持久化、过期删除、内存淘汰、缓存相关</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zhu</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">三月 12, 2023&nbsp;&nbsp;13:00:19</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/redis/">redis</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h4 id="大纲"><a href="#大纲" class="headerlink" title="大纲"></a>大纲</h4><p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E5%85%AB%E8%82%A1%E6%96%87/redis%E5%85%AB%E8%82%A1%E6%96%87%E6%8F%90%E7%BA%B2.png" alt="提纲"></p>
+<h4 id="什么是Redis"><a href="#什么是Redis" class="headerlink" title="什么是Redis"></a>什么是Redis</h4><p>Redis 是一种基于内存的数据库，对数据的读写操作都是在内存中完成，因此<strong>读写速度非常快</strong>，常用于<strong>缓存，消息队列、分布式锁等场景</strong>。</p>
+<p>除此之外，Redis 还支持<strong>事务 、持久化、Lua 脚本、多种集群方案（主从复制模式、哨兵模式、切片机群模式）、发布/订阅模式，内存淘汰机制、过期删除机制</strong>等等</p>
+<h4 id="为什么用redis作为mysql的缓存"><a href="#为什么用redis作为mysql的缓存" class="headerlink" title="为什么用redis作为mysql的缓存"></a>为什么用redis作为mysql的缓存</h4><p>主要是因为 <strong>Redis 具备「高性能」和「高并发」两种特性</strong>。</p>
+<p>单台设备的 Redis 的 QPS（Query Per Second，每秒钟处理完请求的次数） 是 MySQL 的 10 倍，Redis 单机的 QPS 能轻松破 10w，而 MySQL 单机的 QPS 很难破 1w。</p>
+<h4 id="Redis常见数据类型和应用场景"><a href="#Redis常见数据类型和应用场景" class="headerlink" title="Redis常见数据类型和应用场景"></a>Redis常见数据类型和应用场景</h4><p><strong>String（字符串），Hash（哈希），List（列表），Set（集合）、Zset（有序集合）</strong>。</p>
+<ul>
+<li>String 类型的应用场景：缓存对象、常规计数、分布式锁、共享 session 信息等。</li>
+<li>List 类型的应用场景：消息队列（但是有两个问题：1. 生产者需要自行实现全局唯一 ID；2. 不能以消费组形式消费数据）等。</li>
+<li>Hash 类型：缓存对象、购物车等。</li>
+<li>Set 类型：聚合计算（并集、交集、差集）场景，比如点赞、共同关注、抽奖活动等。</li>
+<li>Zset 类型：排序场景，比如排行榜、电话和姓名排序等。</li>
+</ul>
+<p>String 类型的底层的数据结构实现主要是 SDS（简单动态字符串）</p>
+<ul>
+<li><p><strong>SDS 不仅可以保存文本数据，还可以保存二进制数据</strong></p>
+</li>
+<li><p><strong>SDS 获取字符串长度的时间复杂度是 O(1)</strong></p>
+</li>
+<li><p><strong>Redis 的 SDS API 是安全的，拼接字符串不会造成缓冲区溢出</strong></p>
+</li>
+</ul>
+<p>Redis 是用 C 语言实现的，但是它没有直接使用 C 语言的 char* 字符数组来实现字符串，而是自己封装了一个名为简单动态字符串（simple dynamic string，SDS） 的数据结构来表示字符串，也就是 Redis 的 String 数据类型的底层数据结构是 SDS。</p>
+<p>通过以上的分析，我们可以得知 C 语言的字符串不足之处以及可以改进的地方：</p>
+<ul>
+<li><p>获取字符串长度的时间复杂度为 O（N）；C 语言的字符串长度获取 strlen 函数，需要通过遍历的方式来统计字符串长度，时间复杂度是 O（N）</p>
+</li>
+<li><p>字符串的结尾是以 “\0” 字符标识，字符串里面不能包含有 “\0” 字符，因此不能保存二进制数据；</p>
+</li>
+<li><p>字符串操作函数不高效且不安全，比如有缓冲区溢出的风险，有可能会造成程序运行终止</p>
+<ul>
+<li><blockquote>
+<p>C 语言的字符串标准库提供的字符串操作函数，大多数（比如 strcat 追加字符串函数）都是不安全的，因为这些函数把缓冲区大小是否满足操作需求的工作交由开发者来保证，程序内部并不会判断缓冲区大小是否足够用，当发生了缓冲区溢出就有可能造成程序异常结束。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<p>SDS结构：</p>
+<p><img src="https://cdn.xiaolincoding.com//mysql/other/516738c4058cdf9109e40a7812ef4239.png" alt="img"></p>
+<p><strong>buf[]，字符数组，用来保存实际数据</strong>。不仅可以保存字符串，也可以保存二进制数据</p>
+<h3 id="Redis数据类型"><a href="#Redis数据类型" class="headerlink" title="Redis数据类型"></a>Redis数据类型</h3><p>常见的有五种：<strong>String（字符串），Hash（哈希），List（列表），Set（集合）、Zset（有序集合）</strong>。</p>
+<p>随着 Redis 版本的更新，后面又支持了四种数据类型： <strong>BitMap（2.2 版新增）、HyperLogLog（2.8 版新增）、GEO（3.2 版新增）、Stream（5.0 版新增）</strong>。</p>
+<h3 id="Redis持久化"><a href="#Redis持久化" class="headerlink" title="Redis持久化"></a>Redis持久化</h3><h4 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h4><p><strong>AOF(*Append Only File*)</strong> 持久化功能： Redis每次执行写操作的时候，都把命令记录下来，恢复的时候重新执行这些命令即可。</p>
+<p>Redis 是<strong>先执行写操作命令后，才将该命令记录到 AOF 日志里的</strong></p>
+<p>有两个好处：<strong>避免额外的检查开销，不会阻塞当前写操作命令的执行</strong></p>
+<blockquote>
+<p>避免检查开销：如果当前命令有错误，但是已经写到日志里了，就需要做检查。</p>
+<p>当前命令在执行前要先写到日志里自然会阻塞命令的执行。</p>
+</blockquote>
+<p>也有两个风险： <strong>数据会有丢失的风险， 会给下一个命令带来阻塞的风险。</strong></p>
+<blockquote>
+<p>先写再记录，如果写完还没记录的时候发生了错误，那么此时恢复，就会丢失刚才写完的数据。</p>
+<p>先写再记录，会阻塞下一条命令的执行。 </p>
+</blockquote>
+<p>因为将命令写入到日志的这个操作也是在主进程完成的（执行命令也是在主进程），也就是说这两个操作是同步的</p>
+<p><strong>AOF日志写回硬盘的三个策略</strong></p>
+<p>在 <code>redis.conf</code> 配置文件中的 <code>appendfsync</code> 配置项可以有以下 3 种参数可填</p>
+<ul>
+<li><strong>Always</strong>，这个单词的意思是「总是」，所以它的意思是每次写操作命令执行完后，同步将 AOF 日志数据写回硬盘；</li>
+<li><strong>Everysec</strong>，这个单词的意思是「每秒」，所以它的意思是每次写操作命令执行完后，先将命令写入到 AOF 文件的内核缓冲区，然后每隔一秒将缓冲区里的内容写回到硬盘；</li>
+<li><strong>No</strong>，意味着不由 Redis 控制写回硬盘的时机，转交给操作系统控制写回的时机，也就是每次写操作命令执行完后，先将命令写入到 AOF 文件的内核缓冲区，再由操作系统决定何时将缓冲区内容写回硬盘。</li>
+</ul>
+<p>根据不同的场景选择不同的策略，Always能最大程度保证数据不会丢失，但是会牺牲性能。</p>
+<p>No性能很好，但是操作系统写回的时机不确定。</p>
+<p>EverySec是一种折中方案，要性能就选No，要保障就选Always</p>
+<blockquote>
+<p> 当应用程序向文件写入数据时，内核通常先将数据复制到内核缓冲区中，然后排入队列，然后由内核决定何时写入硬盘。</p>
+</blockquote>
+<p>如果想要应用程序向文件写入数据后，能立马将数据同步到硬盘，就可以调用 <code>fsync()</code> 函数，这样内核就会将内核缓冲区的数据直接写入到硬盘，等到硬盘写操作完成后，该函数才会返回。</p>
+<ul>
+<li>Always 策略就是每次写入 AOF 文件数据后，就执行 fsync() 函数；</li>
+<li>Everysec 策略就会创建一个异步任务来执行 fsync() 函数；</li>
+<li>No 策略就是永不执行 fsync() 函数</li>
+</ul>
+<h4 id="AOF重写机制"><a href="#AOF重写机制" class="headerlink" title="AOF重写机制"></a><strong>AOF重写机制</strong></h4><p>AOF 日志是一个文件，随着执行的写操作命令越来越多，文件的大小会越来越大。</p>
+<p>而文件里的日志记录是有冗余的：</p>
+<p>例如 set name hello. …过了很久之后 set name helloworld.</p>
+<p>这就是造成文件越来越大的原因，如何压缩这个文件呢？</p>
+<p>创建一个新的文件，<strong>读取当前数据库中的所有键值对，然后将每一个键值对用一条命令记录到新的文件中</strong>， 然后用新的文件替换掉原来的AOF日志文件。</p>
+<p>重写机制的妙处在于，尽管某个键值对被多条写命令反复修改，<strong>最终也只需要根据这个「键值对」当前的最新状态，然后用一条命令去记录键值对</strong>，代替之前记录这个键值对的多条命令，这样就减少了 AOF 文件中的命令数量。最后在重写工作完成后，将新的 AOF 文件覆盖现有的 AOF 文件。</p>
+<blockquote>
+<p>为什么不用现有的AOF文件进行重写？</p>
+<p>因为如果重写失败，现有的文件遭受污染，会导致数据丢失。</p>
+</blockquote>
+<h4 id="AOF如何重写的？"><a href="#AOF如何重写的？" class="headerlink" title="AOF如何重写的？"></a><strong>AOF如何重写的？</strong></h4><p>Redis 的<strong>重写 AOF 过程是由后台子进程 *bgrewriteaof* 来完成的</strong></p>
+<ul>
+<li>子进程进行 AOF 重写期间，主进程可以继续处理命令请求，从而避免阻塞主进程；</li>
+<li>子进程带有主进程的数据副本（<em>数据副本怎么产生的后面会说</em>），这里<strong>使用子进程而不是线程</strong>，因为如果是使用线程，<strong>多线程之间会共享内存</strong>，那么在修改共享内存数据的时候，<strong>需要通过加锁来保证数据的安全</strong>，而这样就会降低性能。而使用子进程，创建子进程时，父子进程是共享内存数据的，不过这个共享的内存只能以只读的方式，而当父子进程任意一方修改了该共享内存，就会发生「写时复制」，于是父子进程就有了独立的数据副本，就不用加锁来保证数据安全。</li>
+</ul>
+<p>第二点是如何做到的：</p>
+<p>主进程在通过 <code>fork</code> 系统调用生成 bgrewriteaof 子进程时，操作系统会把主进程的「<strong>页表</strong>」复制一份给子进程，这个页表记录着虚拟地址和物理地址映射关系，而不会复制物理内存，也就是说，两者的虚拟空间不同，但其对应的物理空间是同一个</p>
+<p>子进程就共享了父进程的物理内存数据了，这样能够<strong>节约物理内存资源</strong>，页表对应的页表项的属性会标记该物理内存的权限为<strong>只读</strong>。</p>
+<p>不过，当父进程或者子进程在向这个内存发起写操作时，CPU 就会触发<strong>写保护中断</strong>，这个写保护中断是由于违反权限导致的，然后操作系统会在「写保护中断处理函数」里进行<strong>物理内存的复制</strong>，并重新设置其内存映射关系，将父子进程的内存读写权限设置为<strong>可读写</strong>，最后才会对内存进行写操作，这个过程被称为「**写时复制(*Copy On Write*)**」。</p>
+<p>写时复制顾名思义，<strong>在发生写操作的时候，操作系统才会去复制物理内存</strong>，这样是为了防止 fork 创建子进程时，由于物理内存数据的复制时间过长而导致父进程长时间阻塞的问题。</p>
+<p>所以，有两个阶段会导致阻塞父进程：</p>
+<ul>
+<li>创建子进程的途中，由于要复制父进程的页表等数据结构，阻塞的时间跟页表的大小有关，页表越大，阻塞的时间也越长；</li>
+<li>创建完子进程后，如果子进程或者父进程修改了共享数据，就会发生写时复制，这期间会拷贝物理内存，如果内存越大，自然阻塞的时间也越长；</li>
+</ul>
+<p>还有个问题，重写 AOF 日志过程中，如果主进程修改了已经存在 key-value，此时这个 key-value 数据在子进程的内存数据就跟主进程的内存数据不一致了，这时要怎么办呢？</p>
+<p>为了解决这种数据不一致问题，Redis 设置了一个 <strong>AOF 重写缓冲区</strong>，这个缓冲区在创建 bgrewriteaof 子进程之后开始使用。</p>
+<p>在重写 AOF 期间，当 Redis 执行完一个写命令之后，它会<strong>同时将这个写命令写入到 「AOF 缓冲区」和 「AOF 重写缓冲区」</strong></p>
+<p>也就是说，在 bgrewriteaof 子进程执行 AOF 重写期间，主进程需要执行以下三个工作:</p>
+<ul>
+<li>执行客户端发来的命令；</li>
+<li>将执行后的写命令追加到 「AOF 缓冲区」；</li>
+<li>将执行后的写命令追加到 「AOF 重写缓冲区」</li>
+</ul>
+<p><strong>别的参考</strong></p>
+<p>AOF重写不会阻塞主线程，其重写过程是由后台子进程 bgrewriteaof 来完成的，从而避免了性能下降。<br>具体流程如下：</p>
+<p>把主线程的内存拷贝一份给fork出来的 bgrewriteaof 子进程，这里面包含了Redis中最新的数据。<br>子进程将其中的数据进行重写。<br><strong>主线程维护一个AOF缓冲区（实际上无论重不重写都有这个缓冲区，因为AOF日志写入是 → AOF缓冲区 → AOF文件），如果此时有写操作，则会写入到AOF缓冲区以及AOF日志中，保证数据完整。</strong><br>主线程在重写时维护一个<strong>AOF重写缓冲区</strong>，将重写过程中的写操作记入其中，保证重写后的AOF日志也能记录在重写过程中产生的新数据。<br>用新AOF替换老AOF日志。</p>
+<blockquote>
+<p>AOF缓冲区：无论是否进行AOF重写都是存在的，因为AOF日志的产生过程是，Redis执行写命令，将命令写入到AOF缓冲区中，积累到一定程度后写入到AOF日志文件中（这里有三个策略，Always，　No和EverySec）</p>
+<p>AOF重写缓冲区：当重写发生的时候进行的，例如AOF日志文件达到一定的阈值64M，触发AOF重写，此时主进程fork一个重写进程，不用线程的原因是因为线程之间是共享数据的。在主进程fork重写进程bgrewriteaof的时候，主进程是阻塞的，不会执行任何命令的。</p>
+<p>此时bgrewriteaof进程创建的过程中：</p>
+<ul>
+<li>复制主进程的页表等数据结构，此时复制的只是逻辑地址，而不是物理地址，因为页表是逻辑地址对物理地址的映射关系。</li>
+</ul>
+<p>然后开始进行复制，此时数据都在内存中（注意：复制不是对旧的AOF日志文件进行复制，而是对当前的数据重新编写命令写入到新的日志文件中）</p>
+<ul>
+<li><p>页表对应的物理内存是只读的，重写进程进行读取key-value，然后编写命令写入到日志文件中即可</p>
+</li>
+<li><p>如果此时的页表涉及到写（主进程写入新的数据），那么触发一个写保护中断，操作系统在这里进行物理内存的复制（写时复制）</p>
+<ul>
+<li><p>问：这里为什么要复制物理内存？直接将这条命令写入到AOF重写缓冲区不就行了么？相当于一个新加的数据。</p>
+</li>
+<li><p>内核提供的写时复制机制避免了大量内存拷贝以及占用过多内存。</p>
+<p>子进程 fork 操作只是拷贝了父进程的页表数据，当 fork 完成后，对于一个父进程引用的内存页，其引用值从1变成了2。</p>
+<p>当父进程进行写操作时，会申请一份新内存页，并从原内存页 copy 所有数据，之后父进程就在新内存页上进行操作。而原内存页就变成了子进程的专属内存页，引用值变成了 1。</p>
+<p>子进程重写完成并退出后，内核会对资源进行回收，包括占用的内存资源。 </p>
+<p>回收是这样的：对于页表来说，是进程专属，直接清理即可；而关联的内存页会将其引用值减1，如果引用值变成了0，该内存页就会被回收。</p>
+</li>
+<li><p>为什么会发生复制：实际上是主进程对当前页表的复制，为了不妨碍主进程的写操作。子进程继续在原来的页表上进行重写。主进程在新的页表上、新的物理内存上进行写入、改写操作。当然这些命令最后都要写入到AOF重写缓冲区中。</p>
+</li>
+</ul>
+</li>
+<li><p>如果在重写的过程中，主进程对一个已经存在key-value进行修改，那么就把修改命令同时写入到AOF缓冲区和AOF重写缓冲区中。这样就会保证重写日志中是最新的数据了。</p>
+</li>
+</ul>
+</blockquote>
+<p>当重写完成之后，子线程通知主线程，主线程进行如下的操作：</p>
+<ul>
+<li>将AOF重写缓冲区中的所有数据都追加、写入到新的AOF文件中</li>
+<li>对新的AOF文件进行改名，原子操作覆盖原有的AOF日志文件，完成新旧文件的替换。</li>
+</ul>
+<p>主进程继续像往常一样接收命令请求。在整个AOF日志重写过程中，只有以下情况会阻塞主进程</p>
+<ul>
+<li>创建子进程bgrewriteaof的时候，这个时候需要复制主进程的页表，页表越大，阻塞的时间越长</li>
+<li>主进程要写入数据的时候，或者修改数据的时候，这个时候涉及到新的物理内存的复制。但是一般来说时间会很短</li>
+<li>最后AOF重写完成的时候，主进程负责将AOF重写缓冲区中的数据写入到新的日志文件中。</li>
+</ul>
+<p><strong>用 AOF 日志的方式来恢复数据其实是很慢的，因为 Redis 执行命令由==单线程负责==的</strong>，而 AOF 日志恢复数据的方式是顺序执行日志里的每一条命令，如果 AOF 日志很大，这个「重放」的过程就会很慢了</p>
+<h4 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h4><ul>
+<li>AOF 文件的内容是操作命令；</li>
+<li>RDB 文件的内容是二进制数据</li>
+</ul>
+<blockquote>
+<p>AOF 的缺点：恢复比较慢，需要执行命令。</p>
+<p>RDB的缺点：不能频繁的进行快照复制，会影响redis的性能。</p>
+<ul>
+<li>如果频率太低，两次快照间一旦服务器发生宕机，就可能会比较多的数据丢失；</li>
+<li>如果频率太高，频繁写入磁盘和创建子进程会带来额外的性能开销。</li>
+</ul>
+<p>混合持久化,结合AOF和RDB：对大部分的数据使用RDB快照恢复，对最近的少量数据用AOF进行恢复。</p>
+</blockquote>
+<p>Redis 恢复数据时， RDB 恢复数据的效率会比 AOF 高些，因为直接将 RDB 文件读入内存就可以，不需要像 AOF 那样还需要额外执行操作命令的步骤才能恢复数据。</p>
+<p>AOF和RDB进行结合：大部分的数据用RDB，少部分的数据用AOF</p>
+<p>Redis 提供了两个命令来生成 RDB 文件，分别是 <code>save</code> 和 <code>bgsave</code>，他们的区别就在于是否在「主线程」里执行：</p>
+<ul>
+<li>执行了 save 命令，就会在主线程生成 RDB 文件，由于和执行操作命令在同一个线程，所以如果写入 RDB 文件的时间太长，<strong>会阻塞主线程</strong>；</li>
+<li>执行了 bgsave 命令，会创建一个子进程来生成 RDB 文件，这样可以<strong>避免主线程的阻塞</strong>；</li>
+</ul>
+<p>RDB 文件的加载工作是在服务器启动时自动执行的，Redis 并没有提供专门用于加载 RDB 文件的命令</p>
+<h4 id="RDB执行过程"><a href="#RDB执行过程" class="headerlink" title="RDB执行过程"></a>RDB执行过程</h4><p>执行 bgsave 过程中，Redis 依然<strong>可以继续处理操作命令</strong>的，也就是数据是能被修改的。</p>
+<p>那具体如何做到到呢？关键的技术就在于<strong>写时复制技术（Copy-On-Write, COW）</strong></p>
+<p>fucking copy on write</p>
+<p>只有在发生修改内存数据的情况时，物理内存才会被复制一份</p>
+<p>但是，如果主线程（父进程）要<strong>修改共享数据里的某一块数据</strong>（比如键值对 <code>A</code>）时，就会发生写时复制，于是这块数据的<strong>物理内存就会被复制一份（键值对 <code>A&#39;</code>）</strong>，然后<strong>主线程在这个数据副本（键值对 <code>A&#39;</code>）进行修改操作</strong>。与此同时，<strong>bgsave 子进程可以继续把原来的数据（键值对 <code>A</code>）写入到 RDB 文件</strong>。</p>
+<p>果主线程修改了共享数据，<strong>发生了写时复制后，RDB 快照保存的是原本的内存数据</strong>，而</p>
+<p>==<strong>主线程刚修改的数据，是没办法在这一时间写入 RDB 文件的，只能交由下一次的 bgsave 快照。</strong>==</p>
+<p>如果系统恰好在 RDB 快照文件创建完毕后崩溃了，那么 Redis 将会丢失主线程在快照期间修改的数据。</p>
+<blockquote>
+<p>RDB在执行的过程中，主进程依然可以接收命令并执行，包括写命令。如果是写命令，将会触发写时复制，即复制一块新的物理内存对其进行修改。</p>
+<p>而修改的内容是无法即使更新到RDB快照中的，只能等待下一次。</p>
+</blockquote>
+<blockquote>
+<p>但是如果是混合式的，那么这个写命令可以写入到AOF重写缓冲区中，这样，既有了二进制的快照，也有了新的AOF命令，会导致丢失的数据大大减少。</p>
+</blockquote>
+<h3 id="Redis过期删除与内存淘汰"><a href="#Redis过期删除与内存淘汰" class="headerlink" title="Redis过期删除与内存淘汰"></a>Redis过期删除与内存淘汰</h3><h5 id="过期删除"><a href="#过期删除" class="headerlink" title="过期删除"></a>过期删除</h5><p>每当我们对一个 key 设置了过期时间时，Redis 会把该 key 带上过期时间存储到一个<strong>过期字典</strong>（expires dict）中，也就是说「过期字典」保存了数据库中所有 key 的过期时间。</p>
+<p><strong>如何判断过期</strong></p>
+<p>字典实际上是哈希表，哈希表的最大好处就是让我们可以用 O(1) 的时间复杂度来快速查找。当我们查询一个 key 时，Redis 首先检查该 key 是否存在于过期字典中：</p>
+<ul>
+<li>如果不在，则正常读取键值；</li>
+<li>如果存在，则会获取该 key 的过期时间，然后与当前系统时间进行比对，如果比系统时间大，那就没有过期，否则判定该 key 已过期。</li>
+</ul>
+<blockquote>
+<p>所以判断过期不是时刻检查这个key是否过期，过期就删除。而是用户在调用的时候对其进行检查是否过期。</p>
+<ul>
+<li>如果不在过期字典中，说明没有设置过期时间。</li>
+<li>如果在过期字典中，需要查询过期时间，O(1)时间复杂度。hash表。</li>
+</ul>
+</blockquote>
+<p><strong>过期删除策略</strong></p>
+<ul>
+<li><p>定时删除；</p>
+<p>定时删除策略的做法是，<strong>在设置 key 的过期时间时，同时创建一个定时事件，当时间到达时，由事件处理器自动执行 key 的删除操作。</strong></p>
+<blockquote>
+<p>通过事件来及时处理，优点是能及时释放内存，缺点就是比较耗费性能，对CPU不友好。</p>
+<p>实时性比较高。</p>
+</blockquote>
+</li>
+<li><p>惰性删除；</p>
+<p><strong>不主动删除过期键，每次从数据库访问 key 时，都检测 key 是否过期，如果过期则删除该 key。</strong></p>
+<blockquote>
+<p>缺点就是：如果这个key长期没有被访问到，那么就不会被删除，占用内存。</p>
+<p>优点就是对CPU友好，只占用极少的资源。</p>
+</blockquote>
+</li>
+<li><p>定期删除；</p>
+<p><strong>每隔一段时间==「随机」==从数据库中取出一定数量的 key 进行检查，并删除其中的过期key。</strong></p>
+<blockquote>
+<p>优点： 通过限制删除操作执行的时长和频率，来减少删除操作对 CPU 的影响，同时也能删除一部分过期的数据减少了过期键对空间的无效占用。</p>
+<p>缺点：不能及时删除。</p>
+</blockquote>
+</li>
+</ul>
+<p>Redis的策略： 惰性删除和定期删除结合。</p>
+<blockquote>
+<p>用膝盖都能想到。</p>
+</blockquote>
+<p>当用户查询的时候，发现这个key已经过期，那么自然是立即进行删除。 —— 惰性删除</p>
+<p>但是可能存在长期不访问的key，已经过期，但是依然占用内存，所以需要定期进行清理检查。 —— 定期删除</p>
+<blockquote>
+<p>定期删除是随机检查然后删除，如果同时一次性对全部数据进行检查，耗时，占用CPU无法处理别的操作。</p>
+</blockquote>
+<blockquote>
+<p> 定期删除策略的做法：<strong>每隔一段时间「随机」从数据库中取出一定数量的 key 进行检查，并删除其中的过期key。</strong></p>
+</blockquote>
+<p><strong>如何实现惰性删除</strong></p>
+<ul>
+<li>如果没有过期，正常返回数据。</li>
+<li>如果过期了，可以选择同步删除或者异步删除，然后返回null给客户端。</li>
+</ul>
+<p><strong>如何实现定期删除</strong></p>
+<p>redis每隔10秒随机抽取20个key进行检查。为了防止线程卡死，设定了定期删除循环流程的时间上限，默认不会超过 25ms。</p>
+<h5 id="内存淘汰"><a href="#内存淘汰" class="headerlink" title="内存淘汰"></a>内存淘汰</h5><p>当 Redis 的运行内存已经超过 Redis 设置的最大内存之后，则会使用内存淘汰策略删除符合条件的 key，以此来保障 Redis 高效的运行。</p>
+<p>不同位数的操作系统，maxmemory 的默认值是不同的：64位是0意思是无限。 32位是3G，因为内核空间就占了1G。</p>
+<blockquote>
+<p>因为 32 位的机器最大只支持 4GB 的内存，而系统本身就需要一定的内存资源来支持运行</p>
+</blockquote>
+<p>内存淘汰的方法有两大类：1.<strong>不进行过期淘汰</strong> (noeviction)直接OOM  2. 进行淘汰</p>
+<p>进行淘汰又可以分为两大类，一类是<strong>在设置了过期的数据种进行淘汰</strong></p>
+<p>1.随机淘汰设置了过期时间的数据 volatile-random</p>
+<p>2.ttl 淘汰快要过期的数据 volatile-ttl 优先淘汰更早过期的键值</p>
+<p>3.LRU 淘汰最近最久未使用的设置了过期时间的数据（这里是根据时间） volatile-lru</p>
+<p>4.LFU淘汰最近最少使用的数据（这里是频率）volatile-lfu</p>
+<p>另<strong>一类是在全部数据中进行淘汰</strong></p>
+<p>1.随机淘汰 allkeys-random</p>
+<p>2.LRU allkeys-lru</p>
+<p>3.LFU allkeys-lfu</p>
+<p>总共8种淘汰机制。</p>
+<p><strong>LRU如何实现</strong></p>
+<p>传统 LRU 算法的实现是<strong>基于「链表」结构</strong>，链表中的元素按照操作顺序从前往后排列，<strong>最新操作的键会被移动到表头</strong>，当需要内存淘汰时，只需要删除链表尾部的元素即可，因为链表尾部的元素就代表最久未被使用的元素。</p>
+<p><strong>LRU有什么缺陷</strong></p>
+<p>Redis 并没有使用这样的方式实现 LRU 算法，因为传统的 LRU 算法存在两个问题：</p>
+<ul>
+<li>需要用链表管理所有的缓存数据，这会带来额外的空间开销；</li>
+<li>当有数据被访问时，需要在链表上把该数据移动到头端，如果有大量数据被访问，就会带来很多链表移动操作，会很耗时，进而会降低 Redis 缓存性能。</li>
+</ul>
+<p><strong>Redis如何实现LRU</strong></p>
+<p>Redis 实现的是一种<strong>近似 LRU 算法</strong>，目的是为了更好的节约内存，它的<strong>实现方式是在 Redis 的对象结构体中添加一个额外的字段，用于记录此数据的最后一次访问时间</strong>。</p>
+<p>当 Redis 进行内存淘汰时，会使用<strong>随机采样的方式来淘汰数据</strong>，它是随机取 5 个值（此值可配置），然后<strong>淘汰最久没有使用的那个</strong>。</p>
+<p><strong>无法解决缓存污染问题</strong></p>
+<blockquote>
+<p> 比如应用一次读取了大量的数据，而这些数据只会被读取这一次，那么这些数据会留存在 Redis 缓存中很长一段时间，造成缓存污染。</p>
+</blockquote>
+<p><strong>为何提出LFU</strong></p>
+<p>为了解决缓存污染问题。LFU根据访问频次来删除数据。</p>
+<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/redis/%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5/lru%E5%AD%97%E6%AE%B5.png" alt="img"></p>
+<p>前面16位记录的是<strong>访问的时间戳</strong>，后面的8位记录的是<strong>访问频次</strong>。LFU根据这【logc】这个字段决定删除的对象。</p>
+<p>值得一提的是，ｌｏｇｃ是会衰减的。他不是访问次数，而是访问频率。</p>
+<blockquote>
+<p>每次key被访问时，对logc做一个衰减操作，衰减的值跟前后访问的时间差有关系，时间差越大，衰减的值越大，表明访问的频率降低更多。</p>
+<p>做完衰减之后做增加操作，不是单纯的+1，而是根据概率增加，如果logc越大，就越难增加。</p>
+</blockquote>
+<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>过期淘汰策略：Redis是惰性删除+定期删除策略。 定期删除又是随机进行删除，而不是对所有数据进行删除。</p>
+<p>内存淘汰策略有8种： 1.不淘汰 2.对设置了过期时间的数据淘汰（随机淘汰，ttl，LRU，LFU）3.对所有数据淘汰（随机淘汰，LRU，LFU）</p>
+<p>讨论了LRU算法，传统的LRU算法实现是通过一个链表来实现的，将最新操作的节点移动到头部，每次删除的是尾部的节点（尾部的节点表明是最近最久未使用的节点）</p>
+<p>但是这种实现还需要维护一个链表，Redis的LRU实现比较粗糙：</p>
+<p>在Redis的对象中记录一个最后一次访问的时间，每次随机抽取一些数据进行比较，找到抽样数据中的最近最久未使用数据进行删除。</p>
+<p>会导致缓存污染问题，因为LRU是根据使用时间来进行删除的，Redis的这种实现可能会导致有一些最近使用过但是未来长期不使用的数据抽不到，不会被删除，造成浪费/污染。</p>
+<p>引入LFU算法，LFU算法根据使用频次来进行删除，使用次数少的就进行删除。</p>
+<h3 id="高可用篇"><a href="#高可用篇" class="headerlink" title="高可用篇"></a>高可用篇</h3><h4 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h4><h4 id="哨兵"><a href="#哨兵" class="headerlink" title="哨兵"></a>哨兵</h4><h4 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h4><h3 id="缓存雪崩、缓存击穿、缓存穿透"><a href="#缓存雪崩、缓存击穿、缓存穿透" class="headerlink" title="缓存雪崩、缓存击穿、缓存穿透"></a>缓存雪崩、缓存击穿、缓存穿透</h3><p>雪崩：大量缓存数据同时过期</p>
+<p>当<strong>大量缓存数据在同一时间过期（失效）或者 Redis 故障宕机</strong>时，如果此时有大量的用户请求，都无法在 Redis 中处理，于是全部请求都直接访问数据库，从而导致数据库的压力骤增，严重的会造成数据库宕机，从而形成一系列连锁反应，造成整个系统崩溃，这就是<strong>缓存雪崩</strong>的问题。</p>
+<ul>
+<li><p>我们可以在对缓存数据设置过期时间时，<strong>给这些数据的过期时间加上一个随机数</strong>，这样就保证数据不会在同一时间过期。</p>
+</li>
+<li><p>当业务线程在处理用户请求时，<strong>如果发现访问的数据不在 Redis 里，就加个互斥锁，保证同一时间内只有一个请求来构建缓存</strong>（从数据库读取数据，再将数据更新到 Redis 里），当缓存构建完成后，再释放锁。未能获取互斥锁的请求，要么等待锁释放后重新读取缓存，要么就返回空值或者默认值。</p>
+<p>实现互斥锁的时候，最好设置<strong>超时时间</strong>，不然第一个请求拿到了锁，然后这个请求发生了某种意外而一直阻塞，一直不释放锁，这时其他请求也一直拿不到锁，整个系统就会出现无响应的现象。</p>
+</li>
+<li><p>我们对缓存数据可以使用两个 key，一个是<strong>主 key，会设置过期时间</strong>，一个是<strong>备 key，不会设置过期</strong>，它们只是 key 不一样，但是 value 值是一样的，相当于给缓存数据做了个副本。</p>
+<p>当业务线程访问不到「主 key 」的缓存数据时，就直接返回「备 key 」的缓存数据，然后在更新缓存的时候，<strong>同时更新「主 key 」和「备 key 」的数据。</strong></p>
+<p>双 key 策略的好处是，当主 key 过期了，有大量请求获取缓存数据的时候，直接返回备 key 的数据，这样可以快速响应请求。而不用因为 key 失效而导致大量请求被锁阻塞住（采用了互斥锁，仅一个请求来构建缓存），后续再通知后台线程，重新构建主 key 的数据。</p>
+</li>
+</ul>
+<p>击穿：热点数据缓存过期</p>
+<p>如果缓存中的<strong>某个热点数据过期</strong>了，此时大量的请求访问了该热点数据，就无法从缓存中读取，直接访问数据库，数据库很容易就被高并发的请求冲垮，这就是<strong>缓存击穿</strong>的问题。</p>
+<p>应对缓存击穿可以采取前面说到两种方案：</p>
+<ul>
+<li>互斥锁方案，保证同一时间只有一个业务线程更新缓存，未能获取互斥锁的请求，要么等待锁释放后重新读取缓存，要么就返回空值或者默认值。</li>
+<li>不给热点数据设置过期时间，由后台异步更新缓存，或者在热点数据准备要过期前，提前通知后台线程更新缓存以及重新设置过期时间</li>
+</ul>
+<p>穿透：数据即不在缓存，也不在数据库</p>
+<p>用户访问的数据，<strong>既不在缓存中，也不在数据库中</strong>，导致请求在访问缓存时，发现缓存缺失，再去访问数据库时，发现数据库中也没有要访问的数据，没办法构建缓存数据，来服务后续的请求。那么当有大量这样的请求到来时，数据库的压力骤增，这就是<strong>缓存穿透</strong>的问题。</p>
+<ul>
+<li>可能是大量的恶意请求，需要判断请求是否正确</li>
+</ul>
+<p>第一种方案，非法请求的限制</p>
+<p>当有大量恶意请求访问不存在的数据的时候，也会发生缓存穿透，因此在 API 入口处我们要判断求请求参数是否合理，请求参数是否含有非法值、请求字段是否存在，如果判断出是恶意请求就直接返回错误，避免进一步访问缓存和数据库。</p>
+<p>第二种方案，缓存空值或者默认值</p>
+<p>当我们线上业务发现缓存穿透的现象时，可以针对查询的数据，在缓存中设置一个空值或者默认值，这样后续请求就可以从缓存中读取到空值或者默认值，返回给应用，而不会继续查询数据库。</p>
+<p><em>第三种方案，使用布隆过滤器快速判断数据是否存在，避免通过查询数据库来判断数据是否存在。</em></p>
+<p>即使发生了缓存穿透，大量请求只会查询 Redis 和布隆过滤器，而不会查询数据库，保证了数据库能正常运行，Redis 自身也是支持布隆过滤器的。</p>
+<p>布隆过滤器由「初始值都为 0 的位图数组」和「 N 个哈希函数」两部分组成。当我们在写入数据库数据时，在布隆过滤器里做个标记，这样下次查询数据是否在数据库时，只需要查询布隆过滤器，如果查询到数据没有被标记，说明不在数据库中。</p>
+<p>布隆过滤器会通过 3 个操作完成标记：</p>
+<ul>
+<li><p>第一步，使用 N 个哈希函数分别对数据做哈希计算，得到 N 个哈希值；</p>
+</li>
+<li><p>第二步，将第一步得到的 N 个哈希值对位图数组的长度取模，得到每个哈希值在位图数组的对应位置。</p>
+</li>
+<li><p>第三步，将每个哈希值在位图数组的对应位置的值设置为 1；</p>
+<p><strong>存在哈希冲突的可能性</strong>： x 和y计算的位置是都是1 4 7， 这三个位置都设置为1，但是只有x是存在的，y是不存在的。</p>
+<p>但是y查询布隆过滤器，过滤器说是存在的，于是y去查询数据库，发现不存在。</p>
+<blockquote>
+<p> 所以查询存在不一定存在，查询不存在，一定不存在。</p>
+</blockquote>
+</li>
+</ul>
+<p><strong>查询布隆过滤器说数据存在，并不一定证明数据库中存在这个数据，但是查询到数据不存在，数据库中一定就不存在这个数据</strong></p>
+<p><strong>记忆：</strong></p>
+<p>雪崩：大量崩溃</p>
+<p>​        设置随机失效时间</p>
+<p>​        </p>
+<p>击穿：击，单独的。 尖锐的， 热点数据失效导致</p>
+<p>​            不给热点数据设置过期时间</p>
+<p>​            互斥锁</p>
+<p>穿透：透，兜底的数据库都透了，数据库和缓存中都不存在数据导致。</p>
+<p>​        对非法请求进行限制</p>
+<p>​        布隆过滤器快速判断是否存在值</p>
+<p>​        缓存空值或者默认值，返回默认值或者空值</p>
+<img src="https://cdn.xiaolincoding.com//mysql/other/061e2c04e0ebca3425dd75dd035b6b7b.png" alt="图片" style="zoom:80%;">
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zhu</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2023/03/12/redis%E7%AC%94%E8%AE%B0/">https://github.com/sumilk-z/sumilk-z.github.io/2023/03/12/redis%E7%AC%94%E8%AE%B0/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>LIGHT</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/redis/"># redis</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2023/03/14/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%AC%94%E8%AE%B0/"></a>
+            
+            
+            <a class="next" rel="next" href="/2022/08/25/03spring%E7%AC%94%E8%AE%B0%E4%B9%8BAOP/">Spring笔记之AOP</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zhu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>
