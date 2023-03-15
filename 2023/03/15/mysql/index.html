@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="zhu">
+
+
+
+    <meta name="description" content="这是一个个人博客">
+
+
+
+<title>Mysql笔记——索引、事务、锁和日志 | zcblog</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const currentTheme = window.localStorage && window.localStorage.getItem('theme') || '';
+            const isDark = currentTheme === 'dark';
+            const pagebody = document.getElementsByTagName('body')[0]
+            if (isDark) {
+                pagebody.classList.add('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Dark"
+            } else {
+                pagebody.classList.remove('dark-theme');
+                // mobile
+                document.getElementById("mobile-toggle-theme").innerText = "· Light"
+            }
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">Zhu&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">Zhu&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">&#9776; Menu</div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                    <a class="menu-item" href="/archives">主页</a>
+                
+                    <a class="menu-item" href="/category">归档</a>
+                
+                    <a class="menu-item" href="/tag">标签</a>
+                
+                    <a class="menu-item" href="/about">关于</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if(toggleMenu.classList.contains("active")){
+           toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        }else{
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Mysql笔记——索引、事务、锁和日志</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">zhu</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">三月 15, 2023&nbsp;&nbsp;22:11:19</a>
+                        </span>
+                    
+                    
+                        <span class="post-category">
+                    Category:
+                            
+                                <a href="/categories/mysql/">mysql</a>
+                            
+                        </span>
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h3 id="基础篇"><a href="#基础篇" class="headerlink" title="基础篇"></a>基础篇</h3><p>数据库中的B+树 <a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_45814695/article/details/117171536">https://blog.csdn.net/qq_45814695/article/details/117171536</a></p>
+<h4 id="一条语句的执行流程"><a href="#一条语句的执行流程" class="headerlink" title="一条语句的执行流程"></a>一条语句的执行流程</h4><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/sql%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/mysql%E6%9F%A5%E8%AF%A2%E6%B5%81%E7%A8%8B.png" alt="查询语句执行流程" style="zoom:80%;">
+
+<p>分为两层：server层和存储引擎层。</p>
+<p><strong>第一步：建立连接</strong>，TCP三次握手</p>
+<p><strong>第二步： 查询缓存：</strong></p>
+<p>如果 SQL 是查询语句（select 语句），MySQL 就会先去查询缓存（ Query Cache ）里查找缓存数据，看看之前有没有执行过这一条命令，这个查询缓存是以 key-value 形式保存在内存中的，<strong>key 为 SQL 查询语句，value 为 SQL 语句查询的结果。</strong></p>
+<p>查询缓存并不好用：</p>
+<p>对于更新比较频繁的表，查询缓存的命中率很低的，因为只要一个表有更新操作，那么这个表的查询缓存就会被清空。</p>
+<p><strong>MySQL 8.0 版本直接将查询缓存删掉了</strong>，也就是说 MySQL 8.0 开始，执行一条 SQL 查询语句，不会再走到查询缓存这个阶段了。</p>
+<p><strong>第三步：解析SQL语句</strong></p>
+<p>词法分析，语法分析，解析SQL语句是否符合语法要求。</p>
+<p><strong>第四步：执行SQL</strong></p>
+<p>有三个阶段</p>
+<ul>
+<li>prepare 阶段，也就是预处理阶段；<ul>
+<li>检查 SQL 查询语句中的表或者字段是否存在；</li>
+<li>将 <code>select *</code> 中的 <code>*</code> 符号，扩展为表上的所有列；</li>
+</ul>
+</li>
+<li>optimize 阶段，也就是优化阶段；<ul>
+<li><strong>优化器主要负责将 SQL 查询语句的执行方案确定下来</strong></li>
+<li>如在表里面有多个索引的时候，优化器会基于查询成本的考虑，来决定选择使用哪个索引。</li>
+</ul>
+</li>
+<li>execute 阶段，也就是执行阶段；<ul>
+<li>执行器就会和存储引擎交互了，交互是以记录为单位的。</li>
+</ul>
+</li>
+</ul>
+<h3 id="索引篇"><a href="#索引篇" class="headerlink" title="索引篇"></a>索引篇</h3><p>我们可以按照四个角度来分类索引。</p>
+<ul>
+<li>按「数据结构」分类：<strong>B+tree索引、Hash索引、Full-text索引</strong>。</li>
+<li>按「物理存储」分类：<strong>聚簇索引（主键索引）、二级索引（辅助索引）</strong>。</li>
+<li>按「字段特性」分类：<strong>主键索引、唯一索引、普通索引、前缀索引</strong>。</li>
+<li>按「字段个数」分类：<strong>单列索引、联合索引</strong>。</li>
+</ul>
+<p>在创建表时，InnoDB 存储引擎会根据不同的场景选择不同的列作为索引：</p>
+<ul>
+<li>如果<strong>有主键</strong>，默认会使用主键作为聚簇索引的索引键（key）；</li>
+<li>如果<strong>没有主键</strong>，就选择<strong>第一个不包含 NULL 值的唯一列</strong>作为聚簇索引的索引键（key）；</li>
+<li>在上面两个都没有的情况下，InnoDB 将自动生成一个<strong>隐式自增 id 列</strong>作为聚簇索引的索引键（key）；</li>
+</ul>
+<p>其它索引都属于辅助索引（Secondary Index），<strong>也被称为二级索引或非聚簇索引</strong>。<strong>创建的主键索引和二级索引默认使用的是 B+Tree 索引</strong>。</p>
+<blockquote>
+<p>辅助索引： 二级索引或者非聚簇索引。</p>
+</blockquote>
+<h4 id="B-树索引"><a href="#B-树索引" class="headerlink" title="B+树索引"></a>B+树索引</h4><p>B+Tree 是一种多叉树，叶子节点才存放数据，非叶子节点只存放索引，而且每个节点里的数据是<strong>按主键顺序存放</strong>的。每一层父节点的索引值都会出现在下层子节点的索引值中，因此在叶子节点中，包括了所有的索引值信息，并且每一个叶子节点都有两个指针，分别指向下一个叶子节点和上一个叶子节点，形成一个双向链表。</p>
+<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/%E7%B4%A2%E5%BC%95/btree.drawio.png" alt="主键索引 B+Tree"></p>
+<p>例如执行语句</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> product <span class="keyword">where</span> product_no <span class="operator">=</span> <span class="number">5</span>;</span><br></pre></td></tr></table></figure>
+
+<p>这条语句使用了主键索引查询 id 号为 5 的商品。查询过程是这样的，B+Tree 会自顶向下逐层进行查找：</p>
+<ul>
+<li>将 5 与根节点的索引数据 (1，10，20) 比较，5 在 1 和 10 之间，所以根据 B+Tree的搜索逻辑，找到第二层的索引数据 (1，4，7)；</li>
+<li>在第二层的索引数据 (1，4，7)中进行查找，因为 5 在 4 和 7 之间，所以找到第三层的索引数据（4，5，6）；</li>
+<li>在叶子节点的索引数据（4，5，6）中进行查找，然后我们找到了索引值为 5 的行数据。</li>
+</ul>
+<p>数据库的索引和数据都是存储在硬盘的，我们可以把<strong>读取一个节点当作一次磁盘 I/O 操作</strong>。那么上面的整个查询过程一共经历了 3 个节点，也就是进行了 3 次 I/O 操作。</p>
+<p>B+Tree 存储千万级的数据只需要 3-4 层高度就可以满足，这意味着从千万级的表查询目标数据最多需要 3-4 次磁盘 I/O，所以<strong>B+Tree 相比于 B 树和二叉树来说，最大的优势在于查询效率很高，因为即使在数据量很大的情况，查询一个数据的磁盘 I/O 依然维持在 3-4次</strong></p>
+<blockquote>
+<p>假设每一个节点的索引分界为100个，那么三层，就可以存储 100 * 100 * 100 = 100万个数据了。</p>
+</blockquote>
+<h4 id="二级索引、覆盖索引"><a href="#二级索引、覆盖索引" class="headerlink" title="二级索引、覆盖索引"></a>二级索引、覆盖索引</h4><p>主键索引的 B+Tree 和二级索引的 B+Tree 区别如下：</p>
+<ul>
+<li>主键索引的 B+Tree 的叶子节点存放的是实际数据，所有完整的用户记录都存放在主键索引的 B+Tree 的叶子节点里；</li>
+<li><strong>二级索引的 B+Tree 的叶子节点存放的是主键值，而不是实际数据。</strong></li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/%E7%B4%A2%E5%BC%95/%E4%BA%8C%E7%BA%A7%E7%B4%A2%E5%BC%95btree.drawio.png" alt="二级索引 B+Tree"></p>
+<p>==<strong>通过二级索引查询到主键索引</strong>==</p>
+<p>然后再通过主键索引中的 B+Tree 树查询到对应的叶子节点，然后获取整行数据。<strong>这个过程叫「回表」，也就是说要查两个 B+Tree 才能查到数据</strong>。</p>
+<p>不过，当查询的数据是能在二级索引的 B+Tree 的叶子节点里查询到，这时就不用再查主键索引查，比如下面这条查询语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> id <span class="keyword">from</span> product <span class="keyword">where</span> product_no <span class="operator">=</span> <span class="string">&#x27;0005&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>这种在二级索引的 B+Tree 就能查询到结果的过程就叫作「覆盖索引」，也就是只需要查一个 B+Tree 就能找到数据</strong></p>
+<blockquote>
+<p>问： 为什么要多查一个表？</p>
+<p>答：如果客户端给的查询条件中没有主键索引id,而是其他字段，例如这里的商品编号，那就无法通过主键索引去查询实际的数据，只能先查到id再查实际的数据。</p>
+<p>因此，又产生了另一个索引：二级索引或者叫辅助索引。这个索引是用来查id的。</p>
+<p>又问：为什么不在二级索引里放实际的数据？</p>
+<p>答：那内存就炸了，一份数据，好几个索引，每个索引都放一个实际的数据。那数据同步又怎么办？</p>
+<p>问：那如果我本来就是要查主键索引id?</p>
+<p>答：那就直接在辅助索引里查就行，不用再去主键索引查具体的数据了，这叫覆盖索引。</p>
+</blockquote>
+<p>实践操作：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> id <span class="keyword">from</span> product <span class="keyword">where</span> name <span class="operator">=</span> <span class="string">&#x27;茄子&#x27;</span>;</span><br><span class="line"><span class="keyword">select</span> id, product_no <span class="keyword">from</span> product <span class="keyword">where</span> name <span class="operator">=</span> <span class="string">&#x27;茄子&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>这两个查询有何区别？</p>
+<blockquote>
+<p>答： 第一个查询，只查询id，我们去根据name字段建立的B+树索引中查询到name=’茄子’的id。然后返回即可，这叫覆盖索引。</p>
+<p>第二个查询：在第一个查询到id的基础上，到主键索引的B+树中根据id查询一个完整的记录。 这叫回表。</p>
+</blockquote>
+<p>因此，注意到，<strong>主键索引是必须存在的，非常重要的</strong>，如果设置了主键，直接作为主键索引，如果没有设置，找一个非空的列作为主键索引，如果还是找不到，InnoDB会建立一个隐藏的自增的主键索引。</p>
+<h4 id="为什么-MySQL-InnoDB-选择-B-tree-作为索引的数据结构？"><a href="#为什么-MySQL-InnoDB-选择-B-tree-作为索引的数据结构？" class="headerlink" title="为什么 MySQL InnoDB 选择 B+tree 作为索引的数据结构？"></a>为什么 MySQL InnoDB 选择 B+tree 作为索引的数据结构？</h4><p><strong>和二叉树做对比：</strong></p>
+<p>对于有 N 个叶子节点的 B+Tree，其搜索复杂度为<code>O(log(N/d))</code>，其中 d 表示节点允许的最大子节点个数为 d 个。</p>
+<p>在实际的应用当中， d 值是大于100的，这样就保证了，即使数据达到千万级别时，B+Tree 的高度依然维持在 3<del>4 层左右，也就是说一次数据查询操作只需要做 3</del>4 次的磁盘 I/O 操作就能查询到目标数据。</p>
+<p>而二叉树的每个父节点的儿子节点个数只能是 2 个，意味着其搜索复杂度为 <code>O(logN)</code>，这已经比 B+Tree 高出不少，因此二叉树检索到目标数据所经历的磁盘 I/O 次数要更多。</p>
+<blockquote>
+<p>二叉树搜索的时间复杂度为O(logN)</p>
+</blockquote>
+<p><strong>和B树做对比</strong></p>
+<blockquote>
+<p> B树节点上都是数据。相同的层数，B+树能查出的数据更多。</p>
+</blockquote>
+<blockquote>
+<p> B+树叶子节点是双链表连接的，更适合查询范围内的数据。</p>
+</blockquote>
+<p>B+Tree 只在叶子节点存储数据，而 B 树 的非叶子节点也要存储数据，所以 B+Tree 的单个节点的数据量更小，在相同的磁盘 I/O 次数下，就能查询更多的节点。</p>
+<p>另外，B+Tree 叶子节点采用的是双链表连接，适合 MySQL 中常见的基于范围的顺序查找，而 B 树无法做到这一点。</p>
+<p>B 树和 B+ 树等值查询原理基本一致，先从根节点查找，然后对比目标数据的范围，最后递归的进入子节点查找。</p>
+<p>因为 <strong>B+ 树所有叶子节点间还有一个链表进行连接，这种设计对范围查找非常有帮助</strong>，比如说我们想知道 12 月 1 日和 12 月 12 日之间的订单，这个时候可以先查找到 12 月 1 日所在的叶子节点，然后利用链表向右遍历，直到找到 12 月12 日的节点，这样就不需要从根节点查询了，进一步节省查询需要的时间。</p>
+<p>而 B 树没有将所有叶子节点用链表串联起来的结构，因此只能通过树的遍历来完成范围查询，这会涉及多个节点的磁盘 I/O 操作，范围查询效率不如 B+ 树。</p>
+<p>因此，存在大量范围检索的场景，适合使用 B+树，比如数据库。而对于大量的单个索引查询的场景，可以考虑 B 树，比如 nosql 的MongoDB。</p>
+<p><strong>和Hash表做对比</strong></p>
+<p>Hash 在做等值查询的时候效率贼快，搜索复杂度为 O(1)。</p>
+<p>但是 Hash 表不适合做范围查询，<strong>它更适合做等值的查询</strong>，这也是 B+Tree 索引要比 Hash 表索引有着更广泛的适用场景的原因</p>
+<h4 id="索引的分类"><a href="#索引的分类" class="headerlink" title="索引的分类"></a>索引的分类</h4><p><strong>物理存储的角度：主键索引和二级索引</strong></p>
+<p>从物理存储的角度来看，索引分为聚簇索引（主键索引）、二级索引（辅助索引）。</p>
+<p>这两个区别在前面也提到了：</p>
+<ul>
+<li>主键索引的 B+Tree 的叶子节点存放的是实际数据，所有完整的用户记录都存放在主键索引的 B+Tree 的叶子节点里；</li>
+<li>二级索引的 B+Tree 的叶子节点存放的是主键值，而不是实际数据</li>
+</ul>
+<p><strong>字段特性来看：主键索引、唯一索引、普通索引、前缀索引</strong></p>
+<p>从字段特性的角度来看，索引分为主键索引、唯一索引、普通索引、前缀索引。</p>
+<p><strong>主键索引</strong>就是建立在主键字段上的索引，通常在创建表的时候一起创建，一张表最多只有一个主键索引，索引列的值不允许有空值。</p>
+<p><strong>唯一索引</strong>建立在 UNIQUE 字段上的索引，一张表可以有多个唯一索引，索引列的值必须唯一，但是允许有空值。</p>
+<p><strong>普通索引</strong>就是建立在普通字段上的索引，既不要求字段为主键，也不要求字段为 UNIQUE。</p>
+<p><strong>前缀索引</strong>是指对字符类型字段的前几个字符建立的索引，而不是在整个字段上建立的索引，前缀索引可以建立在字段类型为 char、 varchar、binary、varbinary 的列上。</p>
+<p><strong>从字段个数的角度来看，索引分为单列索引、联合索引（复合索引）</strong></p>
+<p>使用联合索引时，存在<strong>最左匹配原则</strong>，也就是按照最左优先的方式进行索引的匹配。在使用联合索引进行查询的时候，如果不遵循「最左匹配原则」，联合索引会失效，这样就无法利用到索引快速查询的特性了</p>
+<p>比如，如果创建了一个 <code>(a, b, c)</code> 联合索引，如果查询条件是以下这几种，就可以匹配上联合索引：</p>
+<ul>
+<li>where a=1；</li>
+<li>where a=1 and b=2 and c=3；</li>
+<li>where a=1 and b=2；</li>
+</ul>
+<p>需要注意的是，因为有查询优化器，所以 a 字段在 where 子句的顺序并不重要。</p>
+<p>但是，如果查询条件是以下这几种，因为不符合最左匹配原则，所以就无法匹配上联合索引，联合索引就会失效:</p>
+<ul>
+<li>where b=2；</li>
+<li>where c=3；</li>
+<li>where b=2 and c=3；</li>
+</ul>
+<p>上面这些查询条件之所以会失效，是因为<code>(a, b, c)</code> 联合索引，是先按 a 排序，在 a 相同的情况再按 b 排序，在 b 相同的情况再按 c 排序。所以，<strong>b 和 c 是全局无序，局部相对有序的</strong>，这样在没有遵循最左匹配原则的情况下，是无法利用到索引的。</p>
+<h4 id="索引失效的情况6种"><a href="#索引失效的情况6种" class="headerlink" title="索引失效的情况6种"></a>索引失效的情况6种</h4><p><strong>0.模糊查询条件在前</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">/</span><span class="operator">/</span> name 字段为二级索引</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> name <span class="keyword">like</span> <span class="string">&#x27;%林&#x27;</span>; <span class="operator">/</span><span class="operator">/</span> 索引失效</span><br><span class="line"></span><br><span class="line"><span class="operator">/</span><span class="operator">/</span> name 字段为二级索引</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> name <span class="keyword">like</span> <span class="string">&#x27;林%&#x27;</span>; <span class="operator">/</span><span class="operator">/</span> 索引有效 <span class="keyword">range</span>索引，走索引扫描</span><br></pre></td></tr></table></figure>
+
+<p><strong>因为索引 B+ 树是按照「索引值」有序排列存储的，只能根据前缀进行比较</strong></p>
+<p>如果使用 <code>name like &#39;%林&#39;</code> 方式来查询，因为查询的结果可能是「陈林、张林、周林」等之类的，所以不知道从哪个索引值开始比较，于是就只能通过全表扫描的方式来查询</p>
+<p><strong>1.对索引使用函数</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">/</span><span class="operator">/</span> name 为二级索引</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> length(name)<span class="operator">=</span><span class="number">6</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2.对索引进行表达式计算</strong></p>
+<p>在查询条件中对索引进行表达式计算，也是无法走索引的</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">explain <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> id <span class="operator">+</span> <span class="number">1</span> <span class="operator">=</span> <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果把查询语句的条件改成 where id = 10 - 1，这样就不是在索引字段进行表达式计算了，于是就可以走索引查询了。</p>
+<p><strong>3.索引是字符串，输入条件却是整型数字</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> phone <span class="operator">=</span> <span class="number">1300000001</span>; <span class="operator">/</span><span class="operator">/</span> phone二级索引，类型是<span class="type">varchar</span></span><br></pre></td></tr></table></figure>
+
+<p>但是如果索引是数字，输入条件是字符串，那么索引不会失效</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> id <span class="operator">=</span> <span class="string">&#x27;1&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p> <strong>MySQL 在遇到字符串和数字比较的时候，会自动把字符串转为数字，然后再进行比较</strong>。</p>
+</blockquote>
+<p>所以 </p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="string">&#x27;10&#x27;</span><span class="operator">&gt;</span><span class="number">9</span>; <span class="operator">/</span><span class="operator">/</span> 结果是<span class="number">1</span>，因为会把<span class="string">&#x27;10&#x27;</span>转为数字，然后和<span class="number">9</span>比较，结果为真。</span><br><span class="line"><span class="keyword">select</span> <span class="string">&#x27;10&#x27;</span><span class="operator">&gt;</span><span class="string">&#x27;9&#x27;</span>; <span class="operator">/</span><span class="operator">/</span> 如果是把数字转为字符串，那么<span class="string">&#x27;10&#x27;</span><span class="operator">&gt;</span><span class="string">&#x27;9&#x27;</span>, 因为<span class="string">&#x27;1&#x27;</span>比<span class="string">&#x27;9&#x27;</span>小，结果应该是<span class="number">0.</span></span><br></pre></td></tr></table></figure>
+
+<p>实际执行结果是1，说明MySQL是将字符串转为数字，而不是将数字转为字符串。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">/</span><span class="operator">/</span> 例子一的查询语句</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> phone <span class="operator">=</span> <span class="number">1300000001</span>;</span><br><span class="line"><span class="operator">/</span><span class="operator">/</span> 实际上是：</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> <span class="built_in">CAST</span>(phone <span class="keyword">AS</span> signed <span class="type">int</span>) <span class="operator">=</span> <span class="number">1300000001</span>; <span class="operator">/</span><span class="operator">/</span> 对索引使用了函数，所以索引失效，全表查询</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">/</span><span class="operator">/</span>例子二的查询语句</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> id <span class="operator">=</span> &quot;1&quot;;</span><br><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> id <span class="operator">=</span> <span class="built_in">CAST</span>(&quot;1&quot; <span class="keyword">AS</span> signed <span class="type">int</span>); <span class="operator">/</span><span class="operator">/</span> 没有对索引使用函数，索引有效，走索引查询</span><br></pre></td></tr></table></figure>
+
+<p><strong>4.联合索引不符合最左原则</strong></p>
+<p>如果创建了一个 <code>(a, b, c)</code> 联合索引，如果查询条件是以下这几种，就可以匹配上联合索引：</p>
+<ul>
+<li>where a=1；</li>
+<li>where a=1 and b=2 and c=3；</li>
+<li>where a=1 and b=2；</li>
+</ul>
+<p>如果是这样的，就会导致索引失效</p>
+<ul>
+<li>where b=2；</li>
+<li>where c=3；</li>
+<li>where b=2 and c=3；</li>
+</ul>
+<blockquote>
+<p>顺序不重要，编译器会自动优化，例如where b = 2 and a = 1, 会优化成a条件在前。</p>
+</blockquote>
+<p>有一个比较特殊的查询条件：where a = 1 and c = 3 ，符合最左匹配吗？<strong>属于索引截断</strong>使用索引下推。</p>
+<p>从 MySQL 5.6 之后，有一个<strong>索引下推功能</strong>，可以在存储引擎层进行索引遍历过程中，<strong>对索引中包含的字段先做判断，直接过滤掉不满足条件的记录</strong>，再返还给 Server 层，从而减少回表次数。</p>
+<p>索引下推功能，例如一个查询是 age&gt;20 and reward=1000. 直接在存储引擎查找age&gt;20的部分，然后挨个查询reward=1000的数据，如果找到了就返回server层。 这就是索引下推，正常查询情况是找到age&gt;20的然后需要回表。</p>
+<p><strong>5.where子句中的OR</strong></p>
+<p>在 WHERE 子句中，如果在 OR 前的条件列是索引列，而在 OR 后的条件列不是索引列，那么索引会失效。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> <span class="keyword">or</span> age <span class="operator">=</span> <span class="number">18</span>;</span><br></pre></td></tr></table></figure>
+
+<p>因为 OR 的含义就是两个只要满足一个即可，因此只有一个条件列是索引列是没有意义的，只要有条件列不是索引列，就会进行全表扫描。</p>
+<blockquote>
+<p>要解决办法很简单，将 age 字段设置为索引即可。</p>
+</blockquote>
+<p>可以看到 type=index merge， index merge 的意思就是<strong>对 id 和 age 分别进行了扫描</strong>，然后将这两个结果集进行了合并，这样做的好处就是避免了全表扫描</p>
+<blockquote>
+<p>OR 两端都是索引列，可以分别进行扫描，然后对结果集进行合并。</p>
+</blockquote>
+<p><strong>总结</strong></p>
+<ul>
+<li>当我们使用<strong>左或者左右模糊匹配</strong>的时候，也就是 <code>like %xx</code> 或者 <code>like %xx%</code>这两种方式都会造成索引失效；</li>
+<li>当我们在查询条件中<strong>对索引列使用函数</strong>，就会导致索引失效。</li>
+<li>当我们在查询条件中<strong>对索引列进行表达式计算</strong>，也是无法走索引的。</li>
+<li>MySQL 在遇到字符串和数字比较的时候，<strong>会自动把字符串转为数字</strong>，然后再进行比较。如果字符串是索引列，而条件语句中的输入参数是数字的话，那么索引列会发生隐式类型转换，由于隐式类型转换是通过 CAST 函数实现的，等同于对索引列使用了函数，所以就会导致索引失效。</li>
+<li>联合索引要能正确使用需要<strong>遵循最左匹配原则</strong>，也就是按照最左优先的方式进行索引的匹配，否则就会导致索引失效。</li>
+<li>在 WHERE 子句中，如果在 OR 前的条件列是索引列，而在 OR 后的条件列不是索引列，那么索引会失效。</li>
+</ul>
+<h5 id="”-xxx“一定会全表扫描么"><a href="#”-xxx“一定会全表扫描么" class="headerlink" title="”%xxx“一定会全表扫描么"></a><strong>”%xxx“一定会全表扫描么</strong></h5><p>答案：不一定。 如果一个表只有两个字段 id, name ,而且id为主键索引（聚簇索引），name为二级索引。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> name <span class="operator">=</span> <span class="string">&#x27;%xxx&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这个查询会走二级索引，直接查到数据，遍历整个二级索引的B+树。</p>
+</blockquote>
+<p>因为：</p>
+<p><strong>二级索引树的记录东西很少</strong>，就只有「索引列+主键值」，而聚簇索引记录的东西会更多，比如聚簇索引中的叶子节点则记录了主键值、事务 id、用于事务和 MVCC 的回滚指针以及所有的剩余列。</p>
+<p>MySQL 优化器认为直接遍历二级索引树要比遍历聚簇索引树的成本要小的多，因此 MySQL 选择了「全扫描二级索引树」的方式查询数据。</p>
+<blockquote>
+<p>从抽象的角度来说，遍历聚簇索引树和遍历二级索引树的节点数量都是一样的，但是二级索引数量的节点记录的东西更少，更为轻量，更容易遍历。</p>
+</blockquote>
+<p>从这个思考题我们知道了，使用左模糊匹配（like “%xx”）并不一定会走全表扫描，关键还是看数据表中的字段。</p>
+<p>如果数据库表中的字段只有主键+二级索引，那么即使使用了左模糊匹配，也不会走全表扫描（type=all），而是走全扫描二级索引树(type=index)。</p>
+<h5 id="count-和-count-1-有什么区别，哪个性能更好？"><a href="#count-和-count-1-有什么区别，哪个性能更好？" class="headerlink" title="count(*) 和 count(1)有什么区别，哪个性能更好？"></a>count(*) 和 count(1)有什么区别，哪个性能更好？</h5><img src="https://cdn.xiaolincoding.com//mysql/other/af711033aa3423330d3a4bc6baeb9532.png" alt="图片" style="zoom: 50%;">
+
+<p>该函数作用是<strong>统计符合查询条件的记录中，函数指定的参数不为 NULL 的记录有多少个</strong>。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="built_in">count</span>(<span class="number">1</span>) <span class="keyword">from</span> t_order;</span><br></pre></td></tr></table></figure>
+
+<p>这条语句是统计「 t_order 表中，1 这个表达式不为 NULL 的记录」有多少个。</p>
+<p>1 这个表达式就是单纯数字，它永远都不是 NULL，所以上面这条语句，其实是在统计 t_order 表中有多少个记录。</p>
+<p><strong>count(主键字段)是如何执行的？</strong></p>
+<p>在通过 count 函数统计有多少个记录时，MySQL 的 server 层会<strong>维护一个名叫 count 的变量。</strong></p>
+<p>server 层会循环向 InnoDB 读取一条记录，如果 count 函数指定的参数不为 NULL，那么就会将变量 count 加 1，直到符合查询的全部记录被读完，就退出循环。最后将 count 变量的值发送给客户端。</p>
+<blockquote>
+<p>server层每次都检查数据引擎返回的数据是否为NULL，不是则count++</p>
+</blockquote>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="built_in">count</span>(id) <span class="keyword">from</span> t_order;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>对于这条语句的执行，如果没有二级索引，数据引擎遍历的是聚簇索引的B+树（实际上是叶子节点的链表）。如果 有二级索引，遍历的是二级索引的B+树，返回的是当前遍历的节点的id.</p>
+<p>server层每次都检查数据引擎返回的数据是否为NULL，不是则count++</p>
+</blockquote>
+<p>「优化器」优先选择的是二级索引, 因为二级索引的叶子节点存放的是主键值，而不是实际数据。更加轻量。</p>
+<p><strong>count(1)的执行过程</strong></p>
+<p>如果表里只有主键索引，没有二级索引时。InnoDB 循环遍历聚簇索引（主键索引），将读取到的记录返回给 server 层，<strong>但是不会读取记录中的任何字段的值</strong>，因为 count 函数的参数是 1，不是字段，所以不需要读取记录中的字段值。参数 1 很明显并不是 NULL，因此 server 层每从 InnoDB 读取到一条记录，就将 count 变量加 1。</p>
+<p><strong>count(*)的执行过程</strong></p>
+<p>在 MySQL 5.7 的官方手册中有这么一句话：</p>
+<blockquote>
+<p> InnoDB handles SELECT COUNT(*) and SELECT COUNT(<code>1</code>) operations in the same way. There is no performance difference.</p>
+</blockquote>
+<p>==<em><strong>翻译：InnoDB以相同的方式处理SELECT COUNT(<code>*</code>)和SELECT COUNT（1）操作，没有性能差异。</strong></em>==</p>
+<p>而且 MySQL 会对 count(*) 和 count(1) 有个优化，如果有多个二级索引的时候，优化器会使用key_len 最小的二级索引进行扫描。</p>
+<blockquote>
+<p> 只有当没有二级索引的时候，才会采用主键索引来进行统计</p>
+</blockquote>
+<p><strong>count(字段)是如何执行的？</strong></p>
+<p>因为是普通字段，没有索引，所以需要全表扫描。</p>
+<p>count(字段) 的执行效率相比前面的 count(1)、 count(*)、 count(主键字段) 执行效率是最差的。</p>
+<p><strong>总结</strong></p>
+<blockquote>
+<p>对于统计，分为是否有二级索引，如果有二级索引则遍历二级索引进行统计，否则遍历的是聚簇索引。</p>
+<p>而二级索引有多个的情况，选择key_len最小的二级索引进行统计。</p>
+<p>count(*）实际上是count(0) 不会进行查询操作</p>
+<p>count(1)同上。</p>
+<p>count(字段) 会进行查询操作。</p>
+<p>以上三者的遍历方案根据是否有二级索引来决定。</p>
+</blockquote>
+<p><strong>如何优化count(<code>*</code>)</strong></p>
+<p>1.模糊查询，统计一个大概 explain select count(*) from t_order;</p>
+<p>2.新建一张表存储count的结果</p>
+<h3 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h3><p>事务的四个特性：ACID特性，原子性，一致性，隔离性和持久性。</p>
+<ul>
+<li>持久性是通过 redo log （重做日志）来保证的；</li>
+<li>原子性是通过 undo log（回滚日志） 来保证的；</li>
+<li>隔离性是通过 MVCC（多版本并发控制） 或锁机制来保证的；</li>
+<li>一致性则是通过持久性+原子性+隔离性来保证</li>
+</ul>
+<h4 id="脏读、不可重复读、幻读"><a href="#脏读、不可重复读、幻读" class="headerlink" title="脏读、不可重复读、幻读"></a>脏读、不可重复读、幻读</h4><p>脏读：事务B读取了事务A还未提交的数据。 例如事务A将数据进行了修改，但是还没有提交，事务B读取，此时事务A因为发生故障对数据回滚，此时事务B读取的数据是脏数据。</p>
+<p>不可重复读：多次读取的数据不一致。</p>
+<p>​    <strong>在一个事务内多次读取同一个数据，如果出现前后两次读到的数据不一样的情况，就意味着发生了「不可重复读」现象。</strong></p>
+<p>幻读： 多次读取的数据量不一致。</p>
+<p>​    <strong>在一个事务内多次查询某个符合查询条件的「记录数量」，如果出现前后两次查询到的记录数量不一样的情况，就意味着发生了「幻读」现象。</strong></p>
+<blockquote>
+<p> 三种情况的严重性排序： 脏读 &gt; 不可重复读 &gt; 幻读</p>
+</blockquote>
+<p>SQL 标准提出了四种隔离级别来规避这些现象，隔离级别越高，性能效率就越低，这四个隔离级别如下：</p>
+<ul>
+<li><strong>读未提交（read uncommitted）</strong>，指一个事务还没提交时，它做的变更就能被其他事务看到；</li>
+<li><strong>读提交（read committed）</strong>，指一个事务提交之后，它做的变更才能被其他事务看到；</li>
+<li>==<strong>可重复读（repeatable read）</strong>==，指一个事务执行过程中看到的数据，一直跟这个事务启动时看到的数据是一致的，<strong>MySQL InnoDB 引擎的默认隔离级别</strong>；</li>
+<li><strong>串行化（serializable ）</strong>；会对记录加上读写锁，在多个事务对这条记录进行读写操作时，如果发生了读写冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行</li>
+</ul>
+<blockquote>
+<p> 隔离水平从高到低： 串行化 &gt; 可重复读 &gt; 读提交 &gt; 读未提交</p>
+</blockquote>
+<img src="https://cdn.xiaolincoding.com//mysql/other/4e98ea2e60923b969790898565b4d643.png" alt="图片" style="zoom:80%;">
+
+<p>要解决脏读现象，就要升级到「读提交」以上的隔离级别；要解决不可重复读现象，就要升级到「可重复读」的隔离级别，要解决幻读现象不建议将隔离级别升级到「串行化」。</p>
+<p><strong>MySQL 在「可重复读」隔离级别下，可以很大程度上避免幻读现象的发生</strong>（注意是很大程度避免，并不是彻底避免），所以 MySQL 并不会使用「串行化」隔离级别来避免幻读现象的发生，因为使用「串行化」隔离级别会影响性能。</p>
+<blockquote>
+<p>MySql的隔离级别是：可重复读。</p>
+</blockquote>
+<p>这四种隔离级别具体是如何实现的呢？</p>
+<ul>
+<li>对于「读未提交」隔离级别的事务来说，因为可以读到未提交事务修改的数据，所以直接读取最新的数据就好了；</li>
+<li>对于「串行化」隔离级别的事务来说，通过加读写锁的方式来避免并行访问；</li>
+<li>对于「读提交」和「可重复读」隔离级别的事务来说，它们是通过 <strong>Read View</strong> 来实现的<ul>
+<li>「读提交」隔离级别是在「每个语句执行前」都会重新生成一个 Read View</li>
+<li>「可重复读」隔离级别是「启动事务时」生成一个 Read View，然后整个事务期间都在用这个 Read View</li>
+</ul>
+</li>
+</ul>
+<p><strong>可重复读是如何实现的</strong></p>
+<p>可重复读隔离级别是启动事务时生成一个 Read View，然后整个事务期间都在用这个 Read View</p>
+<p>在事务执行期间，即便别的事务对当前访问的数据做出了修改，当前事务使用的是Read view，所以重复读数据不会变。</p>
+<p><strong>读提交是如何实现的</strong></p>
+<p>读提交隔离级别是<strong>在每次读取数据时</strong>，都会生成一个新的 Read View。</p>
+<p>读提交能够避免脏读</p>
+<p>MySQL InnoDB 引擎的默认隔离级别虽然是「可重复读」，但是它很大程度上避免幻读现象，解决方案如下：</p>
+<ul>
+<li>针对<strong>快照读</strong>（普通 select 语句），是<strong>通过 MVCC 方式解决了幻读</strong>，因为可重复读隔离级别下，事务执行过程中看到的数据，一直跟这个事务启动时看到的数据是一致的，即使中途有其他事务插入了一条数据，是查询不出来这条数据的，所以就很好了避免幻读问题。</li>
+<li>针对<strong>当前读</strong>（select … for update 等语句），是<strong>通过 next-key lock（记录锁+间隙锁）方式解决了幻读</strong>，因为当执行 select … for update 语句的时候，会加上 next-key lock，如果有其他事务在 next-key lock 锁范围内插入了一条记录，那么这个插入语句就会被阻塞，无法成功插入，所以就很好了避免幻读问题。</li>
+</ul>
+<blockquote>
+<p>当前读要读取最新的数据。</p>
+</blockquote>
+<p>MySQL 里除了普通查询是快照读，其他都是<strong>当前读</strong>，比如 update、insert、delete，这些语句执行前都会查询最新版本的数据，然后再做进一步的操作。</p>
+<p><strong>Innodb 引擎为了解决「可重复读」隔离级别使用「当前读」而造成的幻读问题，就引出了间隙锁</strong>。</p>
+<p>假设，表中有一个范围 id 为（3，5）间隙锁，那么其他事务就无法插入 id = 4 这条记录了，这样就有效的防止幻读现象的发生。</p>
+<p><strong>可重复读隔离级别下虽然很大程度上避免了幻读，但是还是没有能完全解决幻读</strong>。</p>
+<p><strong>总结</strong></p>
+<p>这一章关键是记住几种现象</p>
+<p><strong>脏读</strong>： 事务B读取了事务A未提交的数据，如果事务A回滚，那么该数据是脏数据。</p>
+<p><strong>不可重复读</strong>： 事务B两次读取一个数据的时候，值不一样，因为这个值在事务B期间被事务A修改了。</p>
+<p><strong>幻读</strong>： 多次读取数据的数量不一样。 因为在事务读取期间，新插入或者删除了数据。</p>
+<p>四种隔离级别：</p>
+<p>最低的隔离级别： <strong>读未提交</strong>，默认就是这种状态，什么也不干。</p>
+<p>为了解决脏读： <strong>读提交</strong></p>
+<p>为了解决不可重复读： <strong>可重复读</strong></p>
+<p>为了解决幻读： <strong>串行化</strong>， 加锁实现。 </p>
+<blockquote>
+<p>MySql默认的隔离级别是：可重复读。 尽管串行化是最高的隔离级别，但是会牺牲性能。 可重复读能够在很大程度上解决幻读问题。</p>
+</blockquote>
+<p>大概知道这几种隔离级别是如何实现的</p>
+<p>读提交和可重复读是通过<strong>Read View</strong>来实现的。区别在于创建的时机不同</p>
+<ul>
+<li>可重复读创建的时机是事务开始的时候立即创建，这样每次读的时候都是这个时候的数据，因此可重复读。</li>
+<li>读提交创建read view的时机是每次执行语句的时候创建，读提交只解决脏读问题，不保证可重复读。因此在这个期间可能别的事务会更新数据导致不可重复读。</li>
+</ul>
+<p>需要知道MVCC 多版本并发控制</p>
+<p>这两个隔离级别实现是通过「事务的 Read View 里的字段」和「记录中的两个隐藏列」的比对，来控制并发事务访问同一个记录时的行为，这就叫 MVCC（多版本并发控制）。</p>
+<h3 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h3><h4 id="MySQL锁的分类"><a href="#MySQL锁的分类" class="headerlink" title="MySQL锁的分类"></a>MySQL锁的分类</h4><p>数据库备份的时候</p>
+<p>1.加全局锁，这样整个数据库处于只读状态，但是缺点就是业务停滞。</p>
+<p>2.如果是可重复读的隔离状态，那么可以在这个状态下对数据库进行备份。尽管这个期间数据库可能会更新数据，但是备份的数据是一致性的数据，可以认为是老版本的数据。</p>
+<blockquote>
+<p>一致性的数据：起码不会发生商品少了，钱没少的问题。这就是一致性。</p>
+</blockquote>
+<p>由于 MVCC 的支持，备份期间业务依然可以对数据进行更新操作。</p>
+<p>在可重复读的隔离级别下，即使其他事务更新了表的数据，也不会影响备份数据库时的 Read View，这就是事务四大特性中的隔离性，这样备份期间备份的数据一直是在开启事务时的数据。</p>
+<p>尽量避免在使用 InnoDB 引擎的表使用表锁，因为表锁的颗粒度太大，会影响并发性能，<strong>InnoDB 牛逼的地方在于实现了颗粒度更细的行级锁</strong></p>
+<hr>
+<p>其他参考： <a target="_blank" rel="noopener" href="https://www.cnblogs.com/wugongzi/p/16784313.html">https://www.cnblogs.com/wugongzi/p/16784313.html</a></p>
+<p><strong>共享锁</strong></p>
+<p>共享锁，又称读锁，简称 S 锁。当事务对数据加上读锁后，其他事务只能对该数据加读锁，不能加写锁</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> <span class="keyword">user</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> lock <span class="keyword">in</span> share mode; <span class="operator">/</span><span class="operator">/</span> id<span class="operator">=</span><span class="number">1</span>的数据可读，但是不能加写锁修改</span><br></pre></td></tr></table></figure>
+
+<p><strong>排他锁</strong></p>
+<p>排他锁，又称为写锁，简称 X 锁，当事务对数据加上排他锁后，其他事务无法对该数据进行查询或者修改</p>
+<p>MySQL InnoDB引擎默认 update，delete，insert 都会自动给涉及到的数据加上排他锁，select 语句默认不会加任何锁类型。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> <span class="keyword">user</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> <span class="keyword">for</span> <span class="keyword">update</span>; <span class="operator">/</span><span class="operator">/</span> id<span class="operator">=</span><span class="number">1</span>的数据不能更改，也不能读</span><br></pre></td></tr></table></figure>
+
+<p><strong>全局锁</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flush tables <span class="keyword">with</span> read lock;</span><br></pre></td></tr></table></figure>
+
+<p><strong>表级锁</strong></p>
+<p>表级锁：分两种，一种是表锁，一种是元数据锁（MDL）</p>
+<p>给当前操作的这张表加锁，MyISAM和InnoDB都支持表级锁，前者不支持行级锁。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lock <span class="keyword">table</span> <span class="keyword">user</span> read;  <span class="operator">/</span><span class="operator">/</span> 表共享锁，不会阻塞其他用户对同一表请求，但会阻塞对同一表的写请求；</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lock <span class="keyword">table</span> <span class="keyword">user</span> write; <span class="operator">/</span><span class="operator">/</span> 表独占锁，会阻塞其他用户对同一表的读和写操作</span><br></pre></td></tr></table></figure>
+
+<p>MDL加锁过程是系统自动控制，无需显式使用，在访问一张表的时候会自动加上。MDL锁主要作用是维护表元数据的数据一致性，在表上有活动事务的时候，不可以对元数据进行写入操作。为了避免DML与DDL冲突，保证读写的正确性。</p>
+<p>在MySQL5.5中引入了MDL，当对一张表进行增删改查的时候，加MDL读锁(共享)；当对表结构进行变更操作的时候，加MDL写锁(排他)。</p>
+<p>MDL的问题，如果有一个长事务加了读锁。如果有其他线程想对这个表进行读操作，是允许的。</p>
+<p>此时一个线程想加MDL写锁，被阻塞。</p>
+<p>然后其他线程想对这个表进行读操作，也被阻塞了，因为写锁的优先级高，后续的读锁都排在队列的后面。</p>
+<p>所以为了能安全的对表结构进行变更，在对表结构变更前，先要看看数据库中的长事务，是否有事务已经对表加上了 MDL 读锁，如果可以考虑 kill 掉这个长事务，然后再做表结构的变更。</p>
+<p><strong>行级锁</strong></p>
+<p>MySQL 中，行级锁并不是之间锁记录，而<strong>是锁的索引</strong>。<strong>MySQL 在执行 update、delete 语句时会自动加上行锁</strong></p>
+<blockquote>
+<p>因为查询，更改都会经过主键索引，因此加锁只需要对索引加锁即可。</p>
+</blockquote>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">&gt;</span> <span class="keyword">begin</span>; <span class="operator">/</span><span class="operator">/</span> 开启事务</span><br><span class="line"><span class="operator">&gt;</span> <span class="keyword">update</span> <span class="keyword">user</span> <span class="keyword">set</span> password<span class="operator">=</span><span class="string">&#x27;123&#x27;</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span>; <span class="operator">/</span><span class="operator">/</span> 此时id<span class="operator">=</span><span class="number">1</span>的数据被加上了行锁</span><br><span class="line"><span class="operator">&gt;</span> <span class="operator">/</span><span class="operator">/</span>但是事务并没有提交</span><br></pre></td></tr></table></figure>
+
+<p>另一个用户对这条数据进行更新，导致阻塞，超时报错。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">&gt;</span> <span class="keyword">update</span> <span class="keyword">user</span> <span class="keyword">set</span> password<span class="operator">=</span><span class="string">&#x27;123&#x27;</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span>; <span class="operator">/</span><span class="operator">/</span> 无法执行 </span><br><span class="line">ERROR <span class="number">1205</span>: Lock wait timeout exceeded; try restarting transaction</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>意向锁：意向锁是表锁</strong></p>
+<p>当有事务A有行锁时，MySQL会自动为该表添加意向锁，事务B如果想申请整个表的写锁，那么<strong>不需要遍历每一行判断是否存在行锁</strong>，而直接判断是否存在意向锁，增强性能。</p>
+<p>普通的 select 是不会加行级锁的，普通的 select 语句是利用 MVCC 实现一致性读，是无锁的。</p>
+<blockquote>
+<p>普通的select不会加行级锁，所以也不会触发对表的意向锁。</p>
+</blockquote>
+<p>也可以手动加行级锁</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> ... lock <span class="keyword">in</span> share mode; <span class="operator">/</span><span class="operator">/</span> 先在表上加意向共享锁，然后对数据加共享锁</span><br><span class="line"><span class="keyword">select</span> ... <span class="keyword">for</span> <span class="keyword">update</span>; <span class="operator">/</span><span class="operator">/</span> 先在表上加意向独占锁，然后对数据加独占锁</span><br></pre></td></tr></table></figure>
+
+<p><strong>意向锁的目的是为了快速判断表里是否有记录被加锁</strong></p>
+<p><strong>AUTO-INC锁</strong></p>
+<p>在插入数据时，可以不指定主键的值，数据库会自动给主键赋值递增的值，这主要是通过 <strong>AUTO-INC 锁</strong>实现的</p>
+<p>AUTO-INC锁是特殊的表锁机制，锁不再是一个事务提交后才释放，而是执行完插入语句之后立即释放。</p>
+<p><strong>在插入数据时，会加一个表级别的 AUTO-INC 锁</strong>，然后为被 <code>AUTO_INCREMENT</code> 修饰的字段赋值递增的值，等插入语句执行完成后，才会把 AUTO-INC 锁释放掉。</p>
+<p>但是，AUTO-INC 锁在对大量数据进行插入的时候，<strong>会影响插入性能</strong>，因为另一个事务中的插入会被阻塞。</p>
+<p>在 MySQL 5.1.22 版本开始，InnoDB 存储引擎提供了一种<strong>轻量级的锁</strong>来实现自增。</p>
+<blockquote>
+<p>后面没看懂。问，这种轻量级的锁是如何实现的？解决了什么问题？</p>
+</blockquote>
+<p>行级锁的类型主要有三类：</p>
+<ul>
+<li>Record Lock，记录锁，也就是仅仅把一条记录锁上；</li>
+<li>Gap Lock，间隙锁，锁定一个范围，但是不包含记录本身；</li>
+<li>Next-Key Lock：Record Lock + Gap Lock 的组合，<strong>锁定一个范围，并且锁定记录本身</strong>。临键锁</li>
+</ul>
+<p><strong>记录锁</strong></p>
+<p>它会在 id=1 的记录上加上记录锁，以阻止其他事务插入，更新，删除 id=1 这一行。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> <span class="keyword">user</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br><span class="line"><span class="keyword">select</span> ... lock <span class="keyword">in</span> share mode;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>间隙锁</strong></p>
+<p>间隙锁基于非唯一索引，它锁定一段范围内的索引记录。使用间隙锁锁住的是一个区间，而不仅仅是这个区间中的每一条数据</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> <span class="keyword">user</span> <span class="keyword">where</span> id <span class="operator">&lt;</span> <span class="number">10</span> <span class="keyword">for</span> <span class="keyword">update</span>;</span><br></pre></td></tr></table></figure>
+
+<p>间隙锁虽然存在 X 型间隙锁和 S 型间隙锁，但是并没有什么区别，<strong>间隙锁之间是兼容的，即两个事务可以同时持有包含共同间隙范围的间隙锁，并不存在互斥关系，因为间隙锁的目的是防止插入幻影记录而提出的</strong>。</p>
+<p><strong>临键锁</strong></p>
+<p>Next-Key Lock 称为临键锁，是 Record Lock + Gap Lock 的组合，锁定一个范围，并且锁定记录本身。</p>
+<p>假设，表中有一个范围 id 为（3，5] 的 next-key lock，那么其他事务即不能插入 id = 4 记录，也不能修改 id = 5 这条记录。</p>
+<blockquote>
+<p>和间隙锁的区别是：对范围内的数据甚至不能修改。</p>
+</blockquote>
+<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/%E9%94%81/%E4%B8%B4%E9%94%AE%E9%94%81.drawio.png" alt="img"></p>
+<p>next-key lock 即能保护该记录，又能阻止其他事务将新纪录插入到被保护记录前面的间隙中。</p>
+<p><strong>next-key lock 是包含间隙锁+记录锁的，如果一个事务获取了 X 型的 next-key lock，那么另外一个事务在获取相同范围的 X 型的 next-key lock 时，是会被阻塞的</strong>。</p>
+<p><strong>插入意向锁</strong></p>
+<p>个人解释：</p>
+<p>线程A对某个区间加了间隙锁，准备插入数据，但是到底插入没插入不知道。</p>
+<p>线程B也想在这个区间插入数据，但是发现已经加了间隙锁，于是加了一个<strong>插入意向锁</strong>，表示我也打算在这里插入。</p>
+<p>后面来的想插入这个位置的线程都加插入意向锁，并且进行排队等待。</p>
+<p>等到线程A释放了间隙锁之后，线程B就可以将插入意向锁变成间隙锁，准备插入了，如果没有插入位置了，则失败，如果有则正常插入。后续线程同样如此。</p>
+<p>专业解释：</p>
+<p>一个事务在插入一条记录的时候，需要判断插入位置是否已被其他事务加了间隙锁（next-key lock 也包含间隙锁）。</p>
+<p>如果有的话，插入操作就会发生<strong>阻塞</strong>，直到拥有间隙锁的那个事务提交为止（释放间隙锁的时刻），在此期间会生成一个<strong>插入意向锁</strong>，表明有事务想在某个区间插入新记录，但是现在处于等待状态。</p>
+<blockquote>
+<p> 插入意向锁名字虽然有意向锁，但是它并<strong>不是意向锁，它是一种特殊的间隙锁，属于行级别锁</strong>。</p>
+<p>不能对同一个区间同时持有间隙锁和插入意向锁。</p>
+</blockquote>
+<h4 id="MySQL是怎么加锁的"><a href="#MySQL是怎么加锁的" class="headerlink" title="MySQL是怎么加锁的"></a>MySQL是怎么加锁的</h4><blockquote>
+<p> InnoDB 引擎是支持行级锁的，而 MyISAM 引擎并不支持行级锁.</p>
+</blockquote>
+<p>行级锁的类型主要有三类：</p>
+<ul>
+<li>Record Lock，记录锁，也就是仅仅把一条记录锁上；</li>
+<li>Gap Lock，间隙锁，锁定一个范围，但是不包含记录本身；</li>
+<li>Next-Key Lock：Record Lock + Gap Lock 的组合，<strong>锁定一个范围，并且锁定记录本身</strong>。临键锁</li>
+</ul>
+<p>在读已提交隔离级别下，行级锁的种类只有记录锁，也就是仅仅把一条记录锁上。</p>
+<blockquote>
+<p>记录锁能避免脏读。</p>
+</blockquote>
+<p>在可重复读隔离级别下，行级锁的种类除了有记录锁，还有间隙锁（目的是为了避免幻读）</p>
+<blockquote>
+<p>间隙锁能够有效避免幻读现象的发生。</p>
+</blockquote>
+<p>记录锁分为共享锁S和排他锁X两种。</p>
+<p>加了共享锁，其他事务可以加共享锁，不能加排他锁。 </p>
+<blockquote>
+<p>大家可以一起读，但是不允许任何人修改。</p>
+</blockquote>
+<p>加了排他锁，其他事务什么锁都不能加。</p>
+<blockquote>
+<p>其他人甚至不能一起读。</p>
+</blockquote>
+<ul>
+<li>如果 LOCK_MODE 为 <code>X</code>，说明是 next-key 锁；</li>
+<li>如果 LOCK_MODE 为 <code>X, REC_NOT_GAP</code>，说明是记录锁；</li>
+<li>如果 LOCK_MODE 为 <code>X, GAP</code>，说明是间隙锁；</li>
+</ul>
+<p>唯一索引等值查询：</p>
+<ul>
+<li>当查询的记录是「存在」的，在索引树上定位到这一条记录后，将该记录的索引中的 next-key lock 会<strong>退化成「记录锁」</strong>。</li>
+<li>当查询的记录是「不存在」的，在索引树找到第一条大于该查询记录的记录后，将该记录的索引中的 next-key lock 会<strong>退化成「间隙锁」</strong>。</li>
+</ul>
+<h3 id="日志"><a href="#日志" class="headerlink" title="日志"></a>日志</h3><ul>
+<li><strong>undo log（回滚日志）</strong>：是 Innodb 存储引擎层生成的日志，实现了事务中的<strong>原子性</strong>，主要<strong>用于事务回滚和 MVCC</strong>。</li>
+<li><strong>redo log（重做日志）</strong>：是 Innodb 存储引擎层生成的日志，实现了事务中的<strong>持久性</strong>，主要<strong>用于掉电等故障恢复</strong>；</li>
+<li><strong>binlog （归档日志）</strong>：是 Server 层生成的日志，主要<strong>用于数据备份和主从复制</strong>；</li>
+</ul>
+<h4 id="undo-log"><a href="#undo-log" class="headerlink" title="undo log"></a>undo log</h4><p>undo log 是一种用于撤销回退的日志。在事务没提交之前，MySQL 会先记录更新前的数据到 undo log 日志文件里面，当事务回滚时，可以利用 undo log 来进行回滚</p>
+<p><strong>undo log 还有一个作用，通过 ReadView + undo log 实现 MVCC（多版本并发控制）</strong></p>
+<ul>
+<li>「读提交」隔离级别是在每个 select 都会生成一个新的 Read View，也意味着，事务期间的多次读取同一条数据，前后两次读的数据可能会出现不一致，因为可能这期间另外一个事务修改了该记录，并提交了事务。</li>
+<li>「可重复读」隔离级别是启动事务时生成一个 Read View，然后整个事务期间都在用这个 Read View，这样就保证了在事务期间读到的数据都是事务启动前的记录。</li>
+</ul>
+<p>Buffer Pool 除了缓存「索引页」和「数据页」，还包括了 Undo 页，插入缓存、自适应哈希索引、锁信息等等</p>
+<h4 id="redo-log"><a href="#redo-log" class="headerlink" title="redo log"></a>redo log</h4><p>redo log 是物理日志，记录了某个数据页做了什么修改，比如<strong>对 XXX 表空间中的 YYY 数据页 ZZZ 偏移量的地方做了AAA 更新</strong>，每当执行一个事务就会产生这样的一条或者多条物理日志。</p>
+<blockquote>
+<p>被修改 Undo 页面，需要记录对应 redo log 吗？</p>
+</blockquote>
+<p>需要的。</p>
+<p>开启事务后，InnoDB 层更新记录前，首先要记录相应的 undo log，如果是更新操作，需要把被更新的列的旧值记下来，也就是要生成一条 undo log，undo log 会写入 Buffer Pool 中的 Undo 页面。</p>
+<p>不过，<strong>在内存修改该 Undo 页面后，需要记录对应的 redo log</strong>。</p>
+<blockquote>
+<p>redo log 和 undo log 区别在哪？</p>
+</blockquote>
+<p>这两种日志是属于 InnoDB 存储引擎的日志，它们的区别在于：</p>
+<ul>
+<li>redo log 记录了此次事务「<strong>完成后</strong>」的数据状态，记录的是更新<strong>之后</strong>的值；</li>
+<li>undo log 记录了此次事务「<strong>开始前</strong>」的数据状态，记录的是更新<strong>之前</strong>的值；</li>
+</ul>
+<p>事务提交之前发生了崩溃，重启后会通过 undo log 回滚事务，事务提交之后发生了崩溃，重启后会通过 redo log 恢复事务</p>
+<p>缓存在 redo log buffer 里的 redo log 还是在内存中，它什么时候刷新到磁盘？</p>
+<p>主要有下面几个时机：</p>
+<ul>
+<li>MySQL 正常关闭时；</li>
+<li>当 redo log buffer 中记录的写入量大于 redo log buffer 内存空间的一半时，会触发落盘；</li>
+<li>InnoDB 的后台线程每隔 1 秒，将 redo log buffer 持久化到磁盘。</li>
+<li>每次事务提交时都将缓存在 redo log buffer 里的 redo log 直接持久化到磁盘（这个策略可由 innodb_flush_log_at_trx_commit 参数控制，下面会说）</li>
+</ul>
+<p>单独执行一个更新语句的时候，InnoDB 引擎会自己启动一个事务，在执行更新语句的过程中，生成的 redo log 先写入到 redo log buffer 中，<strong>然后等事务提交的时候，再将缓存在 redo log buffer 中的 redo log 按组的方式「顺序写」到磁盘。</strong></p>
+<p>这是默认的行为，参数为1.</p>
+<p>除此之外，InnoDB 还提供了另外两种策略，由参数 <code>innodb_flush_log_at_trx_commit</code> 参数控制，可取的值有：0、1、2，默认值为 1，这三个值分别代表的策略如下：</p>
+<ul>
+<li>当设置该<strong>参数为 0 时</strong>，表示每次事务提交时 ，还是<strong>将 redo log 留在 redo log buffer 中</strong> ，该模式下在事务提交时不会主动触发写入磁盘的操作。<ul>
+<li>会把缓存在 redo log buffer 中的 redo log ，通过调用 <code>write()</code> 写到操作系统的 Page Cache，然后调用 <code>fsync()</code> 持久化到磁盘。<strong>所以参数为 0 的策略，MySQL 进程的崩溃会导致上一秒钟所有事务数据的丢失</strong>;</li>
+</ul>
+</li>
+<li>当设置该<strong>参数为 1 时</strong>，表示每次事务提交时，都<strong>将缓存在 redo log buffer 里的 redo log 直接持久化到磁盘</strong>，这样可以保证 MySQL 异常重启之后数据不会丢失。<ul>
+<li>可靠性极低的方案。</li>
+</ul>
+</li>
+<li>当设置该<strong>参数为 2 时</strong>，表示每次事务提交时，都只是缓存在 redo log buffer 里的 redo log <strong>写到 redo log 文件，注意写入到「 redo log 文件」并不意味着写入到了磁盘</strong>，因为操作系统的文件系统中有个 Page Cache（如果你想了解 Page Cache，可以看<a target="_blank" rel="noopener" href="https://xiaolincoding.com/os/6_file_system/pagecache.html">这篇 (opens new window)</a>），Page Cache 是专门用来缓存文件数据的，所以写入「 redo log文件」意味着写入到了操作系统的文件缓存。<ul>
+<li>调用 fsync，将缓存在操作系统中 Page Cache 里的 redo log 持久化到磁盘。<strong>所以参数为 2 的策略，较取值为 0 情况下更安全，因为 MySQL 进程的崩溃并不会丢失数据，只有在操作系统崩溃或者系统断电的情况下，上一秒钟所有事务数据才可能丢失</strong>。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>redo log buffer 写入磁盘的时机总结</p>
+<p>1.每次事务提交的时候，立即写入到磁盘，牺牲性能，保证可靠性。</p>
+<p>2.事务提交的时候，不写入磁盘，保留性能，降低可靠性。 每隔1秒写入磁盘一次或者buffer满了就写入。</p>
+<p>3.事务提交的时候，不是写入到磁盘，而是写入到内存中page cache，这是折中方案，但是也有一定的风险，也就是系统崩溃的风险。</p>
+</blockquote>
+<img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/how_update/innodb_flush_log_at_trx_commit.drawio.png?image_process=watermark,text_5YWs5LyX5Y-377ya5bCP5p6XY29kaW5n,type_ZnpsdHpoaw,x_10,y_10,g_se,size_20,color_0000CD,t_70,fill_0" alt="img" style="zoom:80%;">
+
+<h4 id="bin-log"><a href="#bin-log" class="headerlink" title="bin log"></a>bin log</h4><p>MySQL 在完成一条更新操作后，Server 层还会生成一条 binlog，等之后事务提交的时候，会将该事物执行过程中产生的所有 binlog 统一写 入 binlog 文件。</p>
+<p>binlog 文件是记录了所有数据库表结构变更和表数据修改的日志，不会记录查询类的操作，比如 SELECT 和 SHOW 操作。</p>
+<ul>
+<li>binlog 用于备份恢复、主从复制；</li>
+<li>redo log 用于掉电等故障恢复。</li>
+</ul>
+<blockquote>
+<p>如果不小心整个数据库的数据被删除了，能使用 redo log 文件恢复数据吗？</p>
+</blockquote>
+<p>不可以使用 redo log 文件恢复，只能使用 binlog 文件恢复。</p>
+<p>因为 redo log 文件是循环写，是会边写边擦除日志的，只记录未被刷入磁盘的数据的物理日志，已经刷入磁盘的数据都会从 redo log 文件里擦除。</p>
+<p><strong>binlog 文件保存的是全量的日志，也就是保存了所有数据变更的情况</strong>，理论上只要记录在 binlog 上的数据，都可以恢复，所以如果不小心整个数据库的数据被删除了，得用 binlog 文件恢复数据</p>
+<h4 id="两阶段提交协议"><a href="#两阶段提交协议" class="headerlink" title="两阶段提交协议"></a>两阶段提交协议</h4><p>在持久化 redo log 和 binlog 这两份日志的时候，如果出现半成功的状态，就会造成主从环境的数据不一致性。这是因为 redo log 影响主库的数据，binlog 影响从库的数据，所以 redo log 和 binlog 必须保持一致才能保证主从数据一致。</p>
+<p><strong>MySQL 为了避免出现两份日志之间的逻辑不一致的问题，使用了「两阶段提交」来解决</strong>，两阶段提交其实是分布式事务一致性协议，它可以保证多个逻辑操作要不全部成功，要不全部失败，不会出现半成功的状态。</p>
+<p><strong>两阶段提交把单个事务的提交拆分成了 2 个阶段，分别是「准备（Prepare）阶段」和「提交（Commit）阶段」</strong>，每个阶段都由协调者（Coordinator）和参与者（Participant）共同完成。注意，不要把提交（Commit）阶段和 commit 语句混淆了，commit 语句执行的时候，会包含提交（Commit）阶段。</p>
+<p><img src="https://img-blog.csdnimg.cn/f299439a43ad4116ba9e4136856e1ef5.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3VuQWx3YXlzT25saW5l,size_16,color_FFFFFF,t_70,g_se,x_16" alt="img"></p>
+<p>可以看到，InnoDB在写redo log时，并不是一次性写完的，而有两个阶段，Prepare与Commit阶段，这就是”两阶段提交”的含义</p>
+<p>只有等到binlog写入之后，redo log才提交。这就是两阶段提交。</p>
+<p>MySQL为了提升性能，引入了BufferPool缓冲池。查询数据时，先从BufferPool中查询，查询不到则从磁盘加载在BufferPool。</p>
+<p>每次对数据的更新，也不总是实时刷新到磁盘，而是先同步到BufferPool中，涉及到的数据页就会变成脏页。</p>
+<p>同时会启动后台线程，异步地将脏页刷新到磁盘中，来完成BufferPool与磁盘的数据同步。</p>
+<p>如果在某个时间，MySQL突然崩溃，则内存中的BufferPool就会丢失，剩余未同步的数据就会直接消失。</p>
+<p>虽然在更新BufferPool后，也写入了binlog中，但binlog并不具备crash-safe的能力。</p>
+<p>因为崩溃可能发生在写binlog后，刷脏前。在主从同步的情况下，从节点会拿到多出来的一条binlog。</p>
+<p>所以server层的binlog是不支持崩溃恢复的，只是支持误删数据恢复。InnoDB考虑到这一点，自己实现了redo log</p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>zhu</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="https://github.com/sumilk-z/sumilk-z.github.io/2023/03/15/mysql/">https://github.com/sumilk-z/sumilk-z.github.io/2023/03/15/mysql/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>LIGHT</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                    
+                        <a href="/tags/mysql/"># mysql</a>
+                    
+                        
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2023/03/13/%E5%9B%BE%E8%A7%A3TCPIP%E7%AC%94%E8%AE%B0/">计算机网络笔记——TCP/IP UDP</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© zhu | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>
